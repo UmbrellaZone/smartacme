@@ -1,0 +1,38 @@
+{
+  "name": "smartacme",
+  "version": "1.0.0",
+  "description": "acme implementation in TypeScript",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "test": "(npmts --nodocs)"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/pushrocks/smartacme.git"
+  },
+  "keywords": [
+    "TypeScript",
+    "acme",
+    "letsencrypt"
+  ],
+  "author": "Lossless GmbH",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/pushrocks/smartacme/issues"
+  },
+  "homepage": "https://gitlab.com/pushrocks/smartacme#README",
+  "dependencies": {
+    "@types/base64url": "^2.0.3",
+    "base64url": "^2.0.0",
+    "jwa": "^1.1.3",
+    "rsa-pem-to-jwk": "^1.1.3",
+    "smartstring": "^2.0.19",
+    "typings-global": "^1.0.14"
+  },
+  "devDependencies": {
+    "@types/should": "^8.1.30",
+    "should": "^11.1.1",
+    "typings-test": "^1.0.3"
+  }
+}
