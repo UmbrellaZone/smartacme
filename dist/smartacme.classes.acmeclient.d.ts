@@ -186,9 +186,9 @@ export declare class AcmeClient {
      * @param {number} days_valid
      * @return {{resource: string, csr: string, notBefore: string, notAfter: string}}
      */
-    makeCertRequest(csr: any, DAYS_VALID: number): {
+    makeCertRequest(csr: string, DAYS_VALID: number): {
         'resource': string;
-        'csr': string;
+        'csr': any;
         'notBefore': string;
         'notAfter': string;
     };

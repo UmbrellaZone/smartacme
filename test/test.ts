@@ -5,6 +5,12 @@ import * as should from 'should'
 import * as smartacme from '../dist/index'
 
 describe('smartacme', function(){
-    let testAcme: smartacme.smartacme
-    it('should create a valid instance')
+    let testAcme: smartacme.SmartAcme
+    it('should create a valid instance', function(){
+        testAcme = new smartacme.SmartAcme()
+        should(testAcme).be.instanceOf(smartacme.SmartAcme)
+    })
+    it('should register a new account', function() {
+        testAcme.createAccount()
+    })
 })

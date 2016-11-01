@@ -1,3 +1,4 @@
 import 'typings-global';
 import * as path from 'path';
-export { path };
+import * as smartstring from 'smartstring';
+export { path, smartstring };

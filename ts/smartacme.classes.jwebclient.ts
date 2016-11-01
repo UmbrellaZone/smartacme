@@ -1,5 +1,4 @@
 import * as plugins from './smartacme.plugins'
-import * as base64url from 'base64url'
 import * as https from 'https'
 let jwa = require('jwa')
 import * as url from 'url'
@@ -13,7 +12,7 @@ import * as url from 'url'
  * @throws Exception if object cannot be stringified or contains cycle
  */
 let json_to_utf8base64url = function (obj) {
-    return base64url.default.encode(new Buffer(JSON.stringify(obj), 'utf8'))
+    return plugins.smartstring.base64.encodeUri(JSON.stringify(obj))
 }
 
 /**
@@ -30,17 +29,17 @@ export class JWebClient {
          * @member {Object} module:JWebClient~JWebClient#key_pair
          * @desc User account key pair
          */
-        this.key_pair = null // {Object}
+        this.key_pair = {}
         /**
          * @member {string} module:JWebClient~JWebClient#last_nonce
          * @desc Cached nonce returned with last request
          */
-        this.last_nonce = null // {string}
+        this.last_nonce = null
         /**
          * @member {boolean} module:JWebClient~JWebClient#verbose
          * @desc Determines verbose mode
          */
-        this.verbose = false // {boolean}
+        this.verbose = false
     }
 
     /**
@@ -57,7 +56,7 @@ export class JWebClient {
         /*jshint -W069 */
         // prepare key
         if (key instanceof Object) {
-            key = base64url.default.toBuffer(key['k'])
+            key = new Buffer(plugins.smartstring.base64.decode(key['k']))
         }
         // prepare header
         let header = {
@@ -83,13 +82,6 @@ export class JWebClient {
             input,
             sig
         ].join('.')
-        // dereference
-        header = null
-        hmac = null
-        input = null
-        jwk = null
-        key = null
-        payload = null
         // output
         return output
     }
@@ -218,11 +210,12 @@ export class JWebClient {
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
-        let key_pair = this.key_pair
-        if (!(key_pair instanceof Object)) {
-            key_pair = {} // ensure key pair is object
-        }
-        let jwt = this.createJWT(this.last_nonce, payload, 'RS256', key_pair['private_pem'], key_pair['public_jwk'])
+        let jwt = this.createJWT(
+            this.last_nonce,
+            payload,
+            'RS256',
+            this.key_pair['private_pem'],
+            this.key_pair['public_jwk'])
         this.request(uri, jwt, (ans, res) => {
             ctx.evaluateStatus(uri, payload, ans, res)
             // save replay nonce for later requests
@@ -230,16 +223,7 @@ export class JWebClient {
                 ctx.last_nonce = res.headers['replay-nonce']
             }
             callback(ans, res)
-            // dereference
-            ans = null
-            callback = null
-            ctx = null
-            key_pair = null
-            payload = null
-            res = null
-        }, errorCallback)
-        // dereference
-        errorCallback = null
+        }, errorCallback )
     }
 
     /**
@@ -278,11 +262,6 @@ export class JWebClient {
             console.error('Receive:', res['headers']) // received headers
             console.error('Receive:', ans) // received data
         }
-        // dereference
-        ans = null
-        payload = null
-        res = null
-        uri_parsed = null
     }
 
     /**

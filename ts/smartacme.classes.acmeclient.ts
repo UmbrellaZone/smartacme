@@ -1,5 +1,4 @@
 import * as plugins from './smartacme.plugins'
-import * as base64url from 'base64url'
 import * as child_process from 'child_process'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
@@ -14,7 +13,7 @@ import { JWebClient } from './smartacme.classes.jwebclient'
  * @return {Buffer}
  * @throws Exception if object cannot be stringified or contains cycle
  */
-let json_to_utf8buffer = function (obj) {
+let json_to_utf8buffer = (obj) => {
     return new Buffer(JSON.stringify(obj), 'utf8')
 }
 
@@ -27,7 +26,7 @@ let json_to_utf8buffer = function (obj) {
  */
 export class AcmeClient {
     clientProfilePubKey: any
-    days_valid: number
+    daysValid: number
     defaultRsaKeySize: number
     directory: any
     directoryUrl: string
@@ -37,7 +36,7 @@ export class AcmeClient {
     regLink: string
     tosLink: string
     webroot: string
-    well_known_path: string
+    wellKnownPath: string
     withInteraction: boolean
     constructor(directoryUrlArg) {
         /**
@@ -50,7 +49,7 @@ export class AcmeClient {
          * @desc Validity period in days
          * @default 1
          */
-        this.days_valid = 1
+        this.daysValid = 1
         /**
          * @member {number} module:AcmeClient~AcmeClient#defaultRsaKeySize
          * @desc Key strength in bits
@@ -104,7 +103,7 @@ export class AcmeClient {
          * @desc Directory structure for challenge data
          * @default "/.well-known/acme-challenge/"
          */
-        this.well_known_path = '/.well-known/acme-challenge/' // {string}
+        this.wellKnownPath = '/.well-known/acme-challenge/' // {string}
         /**
          * @member {boolean} module:AcmeClient~AcmeClient#withInteraction
          * @desc Determines if interaction of user is required
@@ -154,7 +153,6 @@ export class AcmeClient {
      */
     getRegistration(uri, payload, callback) {
         /*jshint -W069 */
-        let ctx = this
         if (!(payload instanceof Object)) {
             payload = {} // ensure payload is object
         }
@@ -162,33 +160,28 @@ export class AcmeClient {
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
-        this.jWebClient.post(uri, payload, function (ans, res) {
+        this.jWebClient.post(uri, payload,(ans, res) => {
             if (ans instanceof Object) {
-                ctx.clientProfilePubKey = ans.key // cache or reset returned public key
+                this.clientProfilePubKey = ans.key // cache or reset returned public key
                 if ((res instanceof Object) && (res['headers'] instanceof Object)) {
                     let linkStr = res.headers['link']
                     if (typeof linkStr === 'string') {
-                        let tosLink = ctx.getTosLink(linkStr)
+                        let tosLink = this.getTosLink(linkStr)
                         if (typeof tosLink === 'string') {
-                            ctx.tosLink = tosLink // cache TOS link
+                            this.tosLink = tosLink // cache TOS link
                         } else {
-                            ctx.tosLink = null // reset TOS link
+                            this.tosLink = null // reset TOS link
                         }
                     } else {
-                        ctx.tosLink = null // reset TOS link
+                        this.tosLink = null // reset TOS link
                     }
                 } else {
-                    ctx.tosLink = null // reset TOS link
+                    this.tosLink = null // reset TOS link
                 }
                 callback(ans, res)
             } else {
                 callback(false)
             }
-            // dereference
-            ans = null
-            callback = null
-            ctx = null
-            res = null
         })
         // dereference
         payload = null
@@ -202,37 +195,25 @@ export class AcmeClient {
      */
     authorizeDomain(domain, callback) {
         /*jshint -W069 */
-        let ctx = this
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
-        this.getProfile(function (profile) {
+        this.getProfile((profile) => {
             if (!(profile instanceof Object)) {
                 callback(false) // no profile returned
-                // dereference
-                callback = null
-                ctx = null
             } else {
-                ctx.jWebClient.post(ctx.directory['new-authz'], ctx.makeDomainAuthorizationRequest(domain), function (ans, res) {
+                this.jWebClient.post(this.directory['new-authz'], this.makeDomainAuthorizationRequest(domain), (ans, res) => {
                     if ((res instanceof Object) && (res['statusCode'] === 403)) { // if unauthorized
-                        ctx.agreeTos(ctx.tosLink, function (ans_, res_) { // agree to TOS
+                        this.agreeTos(this.tosLink, (ans_, res_) => { // agree to TOS
                             if ( // if TOS were agreed successfully
                                 (res_ instanceof Object)
                                 && (res_['statusCode'] >= 200)
                                 && (res_['statusCode'] <= 400)
                             ) {
-                                ctx.authorizeDomain(domain, callback)  // try authorization again
+                                this.authorizeDomain(domain, callback)  // try authorization again
                             } else {
                                 callback(false) // agreement failed
                             }
-                            // dereference
-                            ans = null
-                            ans_ = null
-                            callback = null
-                            ctx = null
-                            profile = null
-                            res = null
-                            res_ = null
                         })
                     } else {
                         if (
@@ -242,48 +223,29 @@ export class AcmeClient {
                             && (ans instanceof Object)
                         ) {
                             let poll_uri = res.headers['location'] // status URI for polling
-                            let challenge = ctx.selectChallenge(ans, 'http-01') // select simple http challenge
+                            let challenge = this.selectChallenge(ans, 'http-01') // select simple http challenge
                             if (challenge instanceof Object) { // desired challenge is in list
-                                ctx.prepareChallenge(domain, challenge, function () { // prepare all objects and files for challenge
+                                this.prepareChallenge(domain, challenge, () => { // prepare all objects and files for challenge
                                     // reset
                                     ans = null
                                     res = null
                                     // accept challenge
-                                    ctx.acceptChallenge(challenge, function (ans, res) {
+                                    this.acceptChallenge(challenge, (ans, res) => {
                                         if (
                                             (res instanceof Object)
                                             && (res['statusCode'] < 400) // server confirms challenge acceptance
                                         ) {
-                                            ctx.pollUntilValid(poll_uri, callback) // poll status until server states success
+                                            this.pollUntilValid(poll_uri, callback) // poll status until server states success
                                         } else {
                                             callback(false) // server did not confirm challenge acceptance
                                         }
-                                        // dereference
-                                        ans = null
-                                        callback = null
-                                        challenge = null
-                                        ctx = null
-                                        profile = null
-                                        res = null
                                     })
                                 })
                             } else {
                                 callback(false) // desired challenge is not in list
-                                // dereference
-                                ans = null
-                                callback = null
-                                ctx = null
-                                profile = null
-                                res = null
                             }
                         } else {
                             callback(false) // server did not respond with status URI
-                            // dereference
-                            ans = null
-                            callback = null
-                            ctx = null
-                            profile = null
-                            res = null
                         }
                     }
                 })
@@ -317,37 +279,22 @@ export class AcmeClient {
      */
     pollUntilValid(uri, callback, retry = 1) {
         /*jshint -W069 */
-        let ctx = this
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
         if (retry > 128) {
             callback(false) // stop if retry value exceeds maximum
         } else {
-            this.jWebClient.get(uri, function (ans, res) {
+            this.jWebClient.get(uri, (ans, res) => {
                 if (!(ans instanceof Object)) {
                     callback(false) // invalid answer
-                    // dereference
-                    callback = null
-                    ctx = null
-                    res = null
                 } else {
                     if (ans['status'] === 'pending') { // still pending
-                        setTimeout(function () {
-                            ctx.pollUntilValid(uri, callback, retry * 2) // retry
-                            // dereference
-                            ans = null
-                            callback = null
-                            ctx = null
-                            res = null
+                        setTimeout(() => {
+                            this.pollUntilValid(uri, callback, retry * 2) // retry
                         }, retry * 500)
                     } else {
                         callback(ans, res) // challenge complete
-                        // dereference
-                        ans = null
-                        callback = null
-                        ctx = null
-                        res = null
                     }
                 }
             })
@@ -363,38 +310,22 @@ export class AcmeClient {
      */
     pollUntilIssued(uri, callback, retry = 1) {
         /*jshint -W069 */
-        let ctx = this
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
         if (retry > 128) {
             callback(false) // stop if retry value exceeds maximum
         } else {
-            this.jWebClient.get(uri, function (ans, res) {
+            this.jWebClient.get(uri,(ans, res) => {
                 if ((ans instanceof Buffer) && (ans.length > 0)) {
                     callback(ans) // certificate was returned with answer
-                    // dereference
-                    ans = null
-                    callback = null
-                    ctx = null
-                    res = null
                 } else {
                     if ((res instanceof Object) && (res['statusCode'] < 400)) { // still pending
-                        setTimeout(function () {
-                            ctx.pollUntilIssued(uri, callback, retry * 2) // retry
-                            // dereference
-                            ans = null
-                            callback = null
-                            ctx = null
-                            res = null
+                        setTimeout(() => {
+                            this.pollUntilIssued(uri, callback, retry * 2) // retry
                         }, retry * 500)
                     } else {
                         callback(false) // CSR complete
-                        // dereference
-                        ans = null
-                        callback = null
-                        ctx = null
-                        res = null
                     }
                 }
             })
@@ -409,32 +340,20 @@ export class AcmeClient {
      */
     requestSigning(domain, callback) {
         /*jshint -W069 */
-        let ctx = this
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
-        fs.readFile(domain + '.csr', function (err, csr) {
+        fs.readFile(domain + '.csr', (err, csrBuffer: Buffer) => {
             if (err instanceof Object) { // file system error
-                if (ctx.jWebClient.verbose) {
+                if (this.jWebClient.verbose) {
                     console.error('Error  : File system error', err['code'], 'while reading key from file')
                 }
                 callback(false)
-                // dereference
-                callback = null
-                csr = null
-                ctx = null
-                err = null
             } else {
-                ctx.jWebClient.post(ctx.directory['new-cert'], ctx.makeCertRequest(csr, ctx.days_valid), function (ans, res) {
+                let csr = csrBuffer.toString()
+                this.jWebClient.post(this.directory['new-cert'], this.makeCertRequest(csr, this.daysValid), (ans, res) => {
                     if ((ans instanceof Buffer) && (ans.length > 0)) { // answer is buffer
                         callback(ans) // certificate was returned with answer
-                        // dereference
-                        ans = null
-                        callback = null
-                        csr = null
-                        ctx = null
-                        err = null
-                        res = null
                     } else {
                         if (res instanceof Object) {
                             if ((res['statusCode'] < 400) && !ans) { // success response, but no answer was provided
@@ -442,7 +361,7 @@ export class AcmeClient {
                                 if (!(headers instanceof Object)) {
                                     headers = {}  // ensure headers is object
                                 }
-                                ctx.pollUntilIssued(headers['location'], callback) // poll provided status URI
+                                this.pollUntilIssued(headers['location'], callback) // poll provided status URI
                                 // dereference
                                 headers = null
                             } else {
@@ -451,13 +370,6 @@ export class AcmeClient {
                         } else {
                             callback(false) // invalid response
                         }
-                        // dereference
-                        ans = null
-                        callback = null
-                        csr = null
-                        ctx = null
-                        err = null
-                        res = null
                     }
                 })
             }
@@ -471,35 +383,25 @@ export class AcmeClient {
      */
     getProfile(callback) {
         /*jshint -W069 */
-        let ctx = this
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
-        this.getDirectory(function (dir) {
+        this.getDirectory((dir) => {
             if (!(dir instanceof Object)) {
                 callback(false) // server did not respond with directory
-                // dereference
-                callback = null
-                ctx = null
             } else {
-                ctx.directory = dir // cache directory
-                ctx.newRegistration(null, function (ans, res) { // try new registration to get registration link
+                this.directory = dir // cache directory
+                this.newRegistration(null, (ans, res) => { // try new registration to get registration link
                     if (
                         (res instanceof Object)
                         && (res['headers'] instanceof Object)
                         && (typeof res.headers['location'] === 'string')
                     ) {
-                        ctx.regLink = res.headers['location']
-                        ctx.getRegistration(ctx.regLink, null, callback) // get registration info from link
+                        this.regLink = res.headers['location']
+                        this.getRegistration(this.regLink, null, callback) // get registration info from link
                     } else {
                         callback(false) // registration failed
                     }
-                    // dereference
-                    ans = null
-                    callback = null
-                    ctx = null
-                    dir = null
-                    res = null
                 })
             }
         })
@@ -513,40 +415,31 @@ export class AcmeClient {
      */
     createAccount(email, callback) {
         /*jshint -W069 */
-        let ctx = this
         if (typeof email === 'string') {
             if (typeof callback !== 'function') {
                 callback = this.emptyCallback // ensure callback is function
             }
-            ctx.newRegistration(
+            this.newRegistration(
                 {
                     contact: [
                         'mailto:' + email
                     ]
                 },
-                function (ans, res) {
+                (ans, res) => {
                     if (
                         (res instanceof Object)
                         && (res['statusCode'] === 201)
                         && (res['headers'] instanceof Object)
                         && (typeof res.headers['location'] === 'string')
                     ) {
-                        ctx.regLink = res.headers['location']
-                        callback(ctx.regLink) // registration URI
+                        this.regLink = res.headers['location']
+                        callback(this.regLink) // registration URI
                     } else {
                         callback(false) // registration failed
                     }
-                    // dereference
-                    ans = null
-                    callback = null
-                    ctx = null
-                    res = null
                 })
         } else {
             callback(false) // no email address provided
-            // dereference
-            callback = null
-            ctx = null
         }
     }
 
@@ -573,66 +466,47 @@ export class AcmeClient {
      */
     requestCertificate(domain, organization, country, callback) {
         /*jshint -W069 */
-        let ctx = this
         if (typeof domain !== 'string') {
             domain = '' // ensure domain is string
         }
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
-        this.getProfile(function (profile) {
-            let email = ctx.extractEmail(profile) // try to determine email address from profile
-            if (typeof ctx.emailOverride === 'string') {
-                email = ctx.emailOverride  // override email address if set
+        this.getProfile((profile) => {
+            let email = this.extractEmail(profile) // try to determine email address from profile
+            if (typeof this.emailOverride === 'string') {
+                email = this.emailOverride  // override email address if set
             } else if (typeof email !== 'string') {
-                email = ctx.emailDefaultPrefix + '@' + domain  // or set default
+                email = this.emailDefaultPrefix + '@' + domain  // or set default
             }
-            let bit = ctx.defaultRsaKeySize
+            let bit = this.defaultRsaKeySize
             // sanitize
             bit = Number(bit)
-            country = ctx.makeSafeFileName(country)
-            domain = ctx.makeSafeFileName(domain)
-            email = ctx.makeSafeFileName(email)
-            organization = ctx.makeSafeFileName(organization)
+            country = this.makeSafeFileName(country)
+            domain = this.makeSafeFileName(domain)
+            email = this.makeSafeFileName(email)
+            organization = this.makeSafeFileName(organization)
             // create key pair
-            ctx.createKeyPair(bit, country, organization, domain, email, function (e) { // create key pair
+            this.createKeyPair(bit, country, organization, domain, email, (e) => { // create key pair
                 if (!e) {
-                    ctx.requestSigning(domain, function (cert) { // send CSR
+                    this.requestSigning(domain, (cert) => { // send CSR
                         if ((cert instanceof Buffer) || (typeof cert === 'string')) { // valid certificate data
-                            fs.writeFile(domain + '.der', cert, function (err) { // sanitize domain name for file path
+                            fs.writeFile(domain + '.der', cert, (err) => { // sanitize domain name for file path
                                 if (err instanceof Object) { // file system error
-                                    if (ctx.jWebClient.verbose) {
+                                    if (this.jWebClient.verbose) {
                                         console.error('Error  : File system error', err['code'], 'while writing certificate to file')
                                     }
                                     callback(false)
                                 } else {
                                     callback(true)  // CSR complete and certificate written to file system
                                 }
-                                // dereference
-                                callback = null
-                                cert = null
-                                ctx = null
-                                e = null
-                                err = null
-                                profile = null
                             })
                         } else {
                             callback(false) // invalid certificate data
-                            // dereference
-                            callback = null
-                            cert = null
-                            ctx = null
-                            e = null
-                            profile = null
                         }
                     })
                 } else {
                     callback(false) // could not create key pair
-                    // dereference
-                    callback = null
-                    ctx = null
-                    e = null
-                    profile = null
                 }
             })
         })
@@ -656,7 +530,7 @@ export class AcmeClient {
         if (this.jWebClient.verbose) {
             console.error('Running:', openssl)
         }
-        child_process.exec(openssl, function (e) {
+        child_process.exec(openssl, (e) => {
             if (!e) {
                 console.error('Result : done')
             } else {
@@ -690,7 +564,7 @@ export class AcmeClient {
         // respects file name restrictions for ntfs and ext2
         let regex_file = '[<>:\"/\\\\\\|\\?\\*\\u0000-\\u001f\\u007f\\u0080-\\u009f]'
         let regex_path = '[<>:\"\\\\\\|\\?\\*\\u0000-\\u001f\\u007f\\u0080-\\u009f]'
-        return name.replace(new RegExp(withPath ? regex_path : regex_file, 'g'), function (charToReplace) {
+        return name.replace(new RegExp(withPath ? regex_path : regex_file, 'g'), (charToReplace) => {
             if (typeof charToReplace === 'string') {
                 return '%' + charToReplace.charCodeAt(0).toString(16).toLocaleUpperCase()
             }
@@ -706,66 +580,42 @@ export class AcmeClient {
      */
     prepareChallenge(domain, challenge, callback) {
         /*jshint -W069, unused:false*/
-        let ctx = this
         if (typeof callback !== 'function') {
             callback = this.emptyCallback // ensure callback is function
         }
         if (challenge instanceof Object) {
             if (challenge['type'] === 'http-01') { // simple http challenge
-                let path = this.webroot + this.well_known_path + challenge['token'] // webroot and well_known_path are expected to be already sanitized
-                fs.writeFile(path, this.makeKeyAuthorization(challenge), function (err) { // create challenge file
+                let path = this.webroot + this.wellKnownPath + challenge['token'] // webroot and well_known_path are expected to be already sanitized
+                fs.writeFile(path, this.makeKeyAuthorization(challenge), (err) => { // create challenge file
                     if (err instanceof Object) { // file system error
-                        if (ctx.jWebClient.verbose) {
+                        if (this.jWebClient.verbose) {
                             console.error(
                                 'Error  : File system error',
                                 err['code'], 'while writing challenge data to file'
                             )
                         }
                         callback()
-                        // dereference
-                        callback = null
-                        challenge = null
-                        ctx = null
-                        err = null
                     } else {
                         // let uri = "http://" + domain + this.well_known_path + challenge["token"]
                         let rl = readline.createInterface(process.stdin, process.stdout)
-                        if (ctx.withInteraction) {
-                            rl.question('Press enter to proceed', function (answer) { // wait for user to proceed
+                        if (this.withInteraction) {
+                            rl.question('Press enter to proceed', (answer) => { // wait for user to proceed
                                 rl.close()
                                 callback()
-                                // dereference
-                                callback = null
-                                challenge = null
-                                ctx = null
-                                rl = null
                             })
                         } else {
                             rl.close()
                             callback() // skip interaction prompt if desired
-                            // dereference
-                            callback = null
-                            challenge = null
-                            ctx = null
-                            rl = null
                         }
                     }
                 })
             } else { // no supported challenge
                 console.error('Error  : Challenge not supported')
                 callback()
-                // dereference
-                callback = null
-                challenge = null
-                ctx = null
             }
         } else { // invalid challenge response
             console.error('Error  : Invalid challenge response')
             callback()
-            // dereference
-            callback = null
-            challenge = null
-            ctx = null
         }
     }
 
@@ -782,9 +632,6 @@ export class AcmeClient {
             match = null
             return result
         }
-        // dereference
-        match = null
-        return void 0
     }
 
     /**
@@ -796,7 +643,7 @@ export class AcmeClient {
     selectChallenge(ans, challengeType: string) {
         /*jshint -W069 */
         if ((ans instanceof Object) && (ans['challenges'] instanceof Array)) {
-            return ans.challenges.filter(function (entry) {
+            return ans.challenges.filter((entry) => {
                 let type = entry['type']
                 // dereference
                 entry = null
@@ -824,7 +671,7 @@ export class AcmeClient {
             return void 0 // invalid profile
         }
         let prefix = 'mailto:'
-        let email = profile.contact.filter(function (entry) {
+        let email = profile.contact.filter((entry) => {
             if (typeof entry !== 'string') {
                 return false
             } else {
@@ -871,11 +718,9 @@ export class AcmeClient {
                 }
                 )
                 let hash = crypto.createHash('sha256').update(jwk.toString('utf8'), 'utf8').digest()
-                let ACCOUNT_KEY = base64url.default.encode(hash) // create base64 encoded hash of account key
+                // create base64 encoded hash of account key
+                let ACCOUNT_KEY = plugins.smartstring.base64.encodeUri(hash.toString())
                 let token = challenge['token']
-                // dereference
-                challenge = null
-                jwk = null
                 return token + '.' + ACCOUNT_KEY
             }
         } else {
@@ -901,14 +746,14 @@ export class AcmeClient {
      * @param {number} days_valid
      * @return {{resource: string, csr: string, notBefore: string, notAfter: string}}
      */
-    makeCertRequest(csr, DAYS_VALID: number) {
+    makeCertRequest(csr: string, DAYS_VALID: number) {
         if (typeof csr !== 'string' && !(csr instanceof Buffer)) {
             csr = '' // default string for CSR
         }
         if ((typeof DAYS_VALID !== 'number') || (isNaN(DAYS_VALID)) || (DAYS_VALID === 0)) {
             DAYS_VALID = 1 // default validity duration (1 day)
         }
-        let DOMAIN_CSR_DER = base64url.default.encode(csr) // create base64 encoded CSR
+        let DOMAIN_CSR_DER = plugins.smartstring.base64.encodeUri(csr) // create base64 encoded CSR
         let CURRENT_DATE = (new Date()).toISOString() // set start date to current date
 
         // set end date to current date + days_valid
