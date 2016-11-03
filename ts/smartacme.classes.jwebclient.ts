@@ -2,6 +2,12 @@ import * as plugins from './smartacme.plugins'
 import * as https from 'https'
 let jwa = require('jwa')
 import * as url from 'url'
+import * as q from 'q'
+
+export interface IReqResArg {
+    ans: any
+    res: any
+}
 
 /**
  * json_to_utf8base64url
@@ -11,7 +17,7 @@ import * as url from 'url'
  * @return {string}
  * @throws Exception if object cannot be stringified or contains cycle
  */
-let json_to_utf8base64url = function (obj) {
+let json_to_utf8base64url = (obj) => {
     return plugins.smartstring.base64.encodeUri(JSON.stringify(obj))
 }
 
@@ -21,24 +27,22 @@ let json_to_utf8base64url = function (obj) {
  * @description Implementation of HTTPS-based JSON-Web-Client
  */
 export class JWebClient {
-    key_pair: any
-    last_nonce: string
+    /**
+     * User account key pair
+     */
+    keyPair: any = {}
+
+    /**
+     * Cached nonce returned with last request
+     */
+    lastNonce: string = null
+
+    /**
+     * @member {boolean} module:JWebClient~JWebClient#verbose
+     * @desc Determines verbose mode
+     */
     verbose: boolean
     constructor() {
-        /**
-         * @member {Object} module:JWebClient~JWebClient#key_pair
-         * @desc User account key pair
-         */
-        this.key_pair = {}
-        /**
-         * @member {string} module:JWebClient~JWebClient#last_nonce
-         * @desc Cached nonce returned with last request
-         */
-        this.last_nonce = null
-        /**
-         * @member {boolean} module:JWebClient~JWebClient#verbose
-         * @desc Determines verbose mode
-         */
         this.verbose = false
     }
 
@@ -94,17 +98,8 @@ export class JWebClient {
      * @param {function} callback
      * @param {function} errorCallback
      */
-    request(query, payload, callback, errorCallback) {
-        /*jshint -W069 */
-        if (typeof query !== 'string') {
-            query = '' // ensure query is string
-        }
-        if (typeof callback !== 'function') {
-            callback = this.emptyCallback // ensure callback is function
-        }
-        if (typeof errorCallback !== 'function') {
-            errorCallback = this.emptyCallback // ensure callback is function
-        }
+    request(query: string, payload: string = null) {
+        let done = q.defer()
         // prepare options
         let uri = url.parse(query)
         let options = {
@@ -114,7 +109,7 @@ export class JWebClient {
             method: null,
             headers: {}
         }
-        if (typeof payload === 'string') {
+        if (!payload === null) {
             options.method = 'POST'
             options.headers = {
                 'Content-Type': 'application/jose',
@@ -124,15 +119,15 @@ export class JWebClient {
             options.method = 'GET'
         }
         // prepare request
-        let req = https.request(options, function (res) {
+        let req = https.request(options, (res) => {
             // receive data
             let data = []
-            res.on('data', function (block) {
+            res.on('data', (block) => {
                 if (block instanceof Buffer) {
                     data.push(block)
                 }
             })
-            res.on('end', function () {
+            res.on('end', () => {
                 let buf = Buffer.concat(data)
                 let isJSON = (
                     (res instanceof Object)
@@ -144,26 +139,25 @@ export class JWebClient {
                     try {
                         // convert to JSON
                         let json = JSON.parse(buf.toString('utf8'))
-                        callback(json, res)
+                        done.resolve({ json: json, res: res })
                     } catch (e) {
                         // error (if empty or invalid JSON)
-                        errorCallback(void 0, e)
+                        done.reject(e)
                     }
-                } else {
-                    callback(buf, res)
                 }
             })
-        }).on('error', function (e) {
+        }).on('error', (e) => {
             console.error('Error occured', e)
             // error
-            errorCallback(void 0, e)
+            done.reject(e)
         })
         // write POST body if payload was specified
-        if (typeof payload === 'string') {
+        if (!payload === null) {
             req.write(payload)
         }
         // make request
         req.end()
+        return done.promise
     }
 
     /**
@@ -173,69 +167,55 @@ export class JWebClient {
      * @param {function} callback
      * @param {function} errorCallback
      */
-    get(uri, callback, errorCallback) {
-        /*jshint -W069 */
-        let ctx = this
-        if (typeof callback !== 'function') {
-            callback = this.emptyCallback // ensure callback is function
-        }
-        this.request(uri, void 0, function (ans, res) {
-            ctx.evaluateStatus(uri, null, ans, res)
-            // save replay nonce for later requests
-            if ((res instanceof Object) && (res['headers'] instanceof Object)) {
-                ctx.last_nonce = res.headers['replay-nonce']
-            }
-            callback(ans, res)
-            // dereference
-            ans = null
-            callback = null
-            ctx = null
-            res = null
-        }, errorCallback)
-        // dereference
-        errorCallback = null
+    get(uri: string) {
+        let done = q.defer<IReqResArg>()
+        this.request(uri)
+            .then((reqResArg: IReqResArg) => {
+                this.evaluateStatus(uri, null, reqResArg.ans, reqResArg.res)
+                // save replay nonce for later requests
+                if ((reqResArg.res instanceof Object) && (reqResArg.res['headers'] instanceof Object)) {
+                    this.lastNonce = reqResArg.res.headers['replay-nonce']
+                }
+                done.resolve(reqResArg)
+            })
+        return done.promise
     }
 
     /**
-     * post
-     * @description make POST request
+     * make POST request
      * @param {string} uri
      * @param {Object|string|number|boolean} payload
      * @param {function} callback
      * @param {function} errorCallback
      */
-    post(uri, payload, callback, errorCallback) {
-        /*jshint -W069 */
-        let ctx = this
-        if (typeof callback !== 'function') {
-            callback = this.emptyCallback // ensure callback is function
-        }
+    post(uri: string, payload) {
+        let done = q.defer<IReqResArg>()
         let jwt = this.createJWT(
-            this.last_nonce,
+            this.lastNonce,
             payload,
             'RS256',
-            this.key_pair['private_pem'],
-            this.key_pair['public_jwk'])
-        this.request(uri, jwt, (ans, res) => {
-            ctx.evaluateStatus(uri, payload, ans, res)
-            // save replay nonce for later requests
-            if ((res instanceof Object) && (res['headers'] instanceof Object)) {
-                ctx.last_nonce = res.headers['replay-nonce']
-            }
-            callback(ans, res)
-        }, errorCallback )
+            this.keyPair['private_pem'],
+            this.keyPair['public_jwk'])
+        this.request(uri, jwt)
+            .then((reqResArg: IReqResArg) => {
+                this.evaluateStatus(uri, payload, reqResArg.ans, reqResArg.res)
+                // save replay nonce for later requests
+                if ((reqResArg.res instanceof Object) && (reqResArg.res['headers'] instanceof Object)) {
+                    this.lastNonce = reqResArg.res.headers['replay-nonce']
+                }
+                done.resolve(reqResArg)
+            })
+        return done.promise
     }
 
     /**
-     * evaluateStatus
-     * @description check if status is expected and log errors
+     * checks if status is expected and log errors
      * @param {string} uri
      * @param {Object|string|number|boolean} payload
      * @param {Object|string} ans
      * @param {Object} res
      */
     evaluateStatus(uri, payload, ans, res) {
-        /*jshint -W069 */
         if (this.verbose) {
             if (
                 (payload instanceof Object)
@@ -262,12 +242,5 @@ export class JWebClient {
             console.error('Receive:', res['headers']) // received headers
             console.error('Receive:', ans) // received data
         }
-    }
-
-    /**
-     * Helper: Empty callback
-     */
-    emptyCallback() {
-        // nop
     }
 }

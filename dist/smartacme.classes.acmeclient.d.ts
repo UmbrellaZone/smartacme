@@ -1,3 +1,6 @@
+/// <reference types="q" />
+import * as q from 'q';
+import { IReqResArg } from './smartacme.classes.jwebclient';
 /**
  * @class AcmeClient
  * @constructor
@@ -7,7 +10,7 @@
  */
 export declare class AcmeClient {
     clientProfilePubKey: any;
-    days_valid: number;
+    daysValid: number;
     defaultRsaKeySize: number;
     directory: any;
     directoryUrl: string;
@@ -17,7 +20,7 @@ export declare class AcmeClient {
     regLink: string;
     tosLink: string;
     webroot: string;
-    well_known_path: string;
+    wellKnownPath: string;
     withInteraction: boolean;
     constructor(directoryUrlArg: any);
     /**
@@ -25,7 +28,7 @@ export declare class AcmeClient {
      * @description retrieve directory entries (directory url must be set prior to execution)
      * @param {function} callback - first argument will be the answer object
      */
-    getDirectory(callback: any): void;
+    getDirectory(): q.Promise<IReqResArg>;
     /**
      * newRegistration
      * @description try to register (directory lookup must have occured prior to execution)
@@ -40,7 +43,7 @@ export declare class AcmeClient {
      * @param {Object} payload - update information
      * @param {function} callback - first argument will be the answer object
      */
-    getRegistration(uri: any, payload: any, callback: any): void;
+    getRegistration(uri: any, payload: any): q.Promise<IReqResArg>;
     /**
      * authorizeDomain
      * @description authorize domain using challenge-response-method
@@ -79,11 +82,10 @@ export declare class AcmeClient {
      */
     requestSigning(domain: any, callback: any): void;
     /**
-     * getProfile
-     * @description retrieve profile of user (will make directory lookup and registration check)
+     * retrieves profile of user (will make directory lookup and registration check)
      * @param {function} callback - first argument will be the answer object
      */
-    getProfile(callback: any): void;
+    getProfile(): q.Promise<{}>;
     /**
      * createAccount
      * @description create new account (assumes directory lookup has already occured)
@@ -104,8 +106,9 @@ export declare class AcmeClient {
      * @param {string} organization
      * @param {string} country
      * @param {function} callback
+     * @returns Promise
      */
-    requestCertificate(domain: any, organization: any, country: any, callback: any): void;
+    requestCertificate(domain: string, organization: string, country: string): q.Promise<{}>;
     /**
      * External: Create key pair
      * @param {number} bit - key strength, expected to be already sanitized
@@ -115,7 +118,7 @@ export declare class AcmeClient {
      * @param {string} e - email address, expected to be already sanitized
      * @param {function} callback
      */
-    createKeyPair(bit: any, c: any, o: any, cn: any, e: any, callback: any): void;
+    createKeyPair(bit: any, c: any, o: any, cn: any, e: any): q.Promise<{}>;
     /**
      * Helper: Empty callback
      */

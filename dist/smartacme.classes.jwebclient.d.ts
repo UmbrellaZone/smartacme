@@ -1,11 +1,27 @@
+/// <reference types="q" />
+import * as q from 'q';
+export interface IReqResArg {
+    ans: any;
+    res: any;
+}
 /**
  * @class JWebClient
  * @constructor
  * @description Implementation of HTTPS-based JSON-Web-Client
  */
 export declare class JWebClient {
-    key_pair: any;
-    last_nonce: string;
+    /**
+     * User account key pair
+     */
+    keyPair: any;
+    /**
+     * Cached nonce returned with last request
+     */
+    lastNonce: string;
+    /**
+     * @member {boolean} module:JWebClient~JWebClient#verbose
+     * @desc Determines verbose mode
+     */
     verbose: boolean;
     constructor();
     /**
@@ -27,7 +43,7 @@ export declare class JWebClient {
      * @param {function} callback
      * @param {function} errorCallback
      */
-    request(query: any, payload: any, callback: any, errorCallback: any): void;
+    request(query: string, payload?: string): q.Promise<{}>;
     /**
      * get
      * @description make GET request
@@ -35,27 +51,21 @@ export declare class JWebClient {
      * @param {function} callback
      * @param {function} errorCallback
      */
-    get(uri: any, callback: any, errorCallback: any): void;
+    get(uri: string): q.Promise<IReqResArg>;
     /**
-     * post
-     * @description make POST request
+     * make POST request
      * @param {string} uri
      * @param {Object|string|number|boolean} payload
      * @param {function} callback
      * @param {function} errorCallback
      */
-    post(uri: any, payload: any, callback: any, errorCallback: any): void;
+    post(uri: string, payload: any): q.Promise<IReqResArg>;
     /**
-     * evaluateStatus
-     * @description check if status is expected and log errors
+     * checks if status is expected and log errors
      * @param {string} uri
      * @param {Object|string|number|boolean} payload
      * @param {Object|string} ans
      * @param {Object} res
      */
     evaluateStatus(uri: any, payload: any, ans: any, res: any): void;
-    /**
-     * Helper: Empty callback
-     */
-    emptyCallback(): void;
 }
