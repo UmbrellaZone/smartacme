@@ -8,10 +8,20 @@ export class SmartAcme {
         this.acmeClient = new acmeclient.AcmeClient(directoryUrlArg)
     }
 
+    /**
+     * creates an account
+     */
     createAccount() {
         this.acmeClient.createAccount('test@bleu.de',(answer) => {
             console.log(answer)
         })
+    }
+
+    /**
+     * returns the openssl key pair for 
+     */
+    getKeyPair() {
+        return this.acmeClient.getKeyPair()
     }
 }
 

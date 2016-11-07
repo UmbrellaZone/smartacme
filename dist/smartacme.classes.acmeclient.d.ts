@@ -11,7 +11,6 @@ import { IReqResArg } from './smartacme.classes.jwebclient';
 export declare class AcmeClient {
     clientProfilePubKey: any;
     daysValid: number;
-    defaultRsaKeySize: number;
     directory: any;
     directoryUrl: string;
     emailDefaultPrefix: string;
@@ -80,7 +79,7 @@ export declare class AcmeClient {
      * @param {string} domain - expected to be already sanitized
      * @param {function} callback - first argument will be the answer object
      */
-    requestSigning(domain: any, callback: any): void;
+    requestSigning(commonName: any, callback: any): q.Promise<{}>;
     /**
      * retrieves profile of user (will make directory lookup and registration check)
      * @param {function} callback - first argument will be the answer object
@@ -102,13 +101,8 @@ export declare class AcmeClient {
     agreeTos(tosLink: any, callback: any): void;
     /**
      * Entry-Point: Request certificate
-     * @param {string} domain
-     * @param {string} organization
-     * @param {string} country
-     * @param {function} callback
-     * @returns Promise
      */
-    requestCertificate(domain: string, organization: string, country: string): q.Promise<{}>;
+    requestCertificate(domainArg: string, organizationArg: string, countryCodeArg: string): q.Promise<{}>;
     /**
      * External: Create key pair
      * @param {number} bit - key strength, expected to be already sanitized
@@ -118,7 +112,13 @@ export declare class AcmeClient {
      * @param {string} e - email address, expected to be already sanitized
      * @param {function} callback
      */
-    createKeyPair(bit: any, c: any, o: any, cn: any, e: any): q.Promise<{}>;
+    createKeyPair(optionsArg: {
+        keyBitSize: number;
+        countryCode: string;
+        organization: string;
+        commonName: string;
+        emailAddress: string;
+    }): q.Promise<{}>;
     /**
      * Helper: Empty callback
      */

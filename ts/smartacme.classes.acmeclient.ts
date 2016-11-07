@@ -28,7 +28,6 @@ let json_to_utf8buffer = (obj) => {
 export class AcmeClient {
     clientProfilePubKey: any
     daysValid: number
-    defaultRsaKeySize: number
     directory: any
     directoryUrl: string
     emailDefaultPrefix: string
@@ -51,12 +50,7 @@ export class AcmeClient {
          * @default 1
          */
         this.daysValid = 1
-        /**
-         * @member {number} module:AcmeClient~AcmeClient#defaultRsaKeySize
-         * @desc Key strength in bits
-         * @default 4096
-         */
-        this.defaultRsaKeySize = 4096
+
         /**
          * @member {Object} module:AcmeClient~AcmeClient#directory
          * @desc Hash map of REST URIs
@@ -336,12 +330,9 @@ export class AcmeClient {
      * @param {string} domain - expected to be already sanitized
      * @param {function} callback - first argument will be the answer object
      */
-    requestSigning(domain, callback) {
-        /*jshint -W069 */
-        if (typeof callback !== 'function') {
-            callback = this.emptyCallback // ensure callback is function
-        }
-        fs.readFile(domain + '.csr', (err, csrBuffer: Buffer) => {
+    requestSigning(commonName, callback) {
+        let done = q.defer()
+        fs.readFile(commonName + '.csr', (err, csrBuffer: Buffer) => {
             if (err instanceof Object) { // file system error
                 if (this.jWebClient.verbose) {
                     console.error('Error  : File system error', err['code'], 'while reading key from file')
@@ -372,6 +363,7 @@ export class AcmeClient {
                 })
             }
         })
+        return done.promise
     }
 
     /**
@@ -457,30 +449,28 @@ export class AcmeClient {
 
     /**
      * Entry-Point: Request certificate
-     * @param {string} domain
-     * @param {string} organization
-     * @param {string} country
-     * @param {function} callback
-     * @returns Promise
      */
-    requestCertificate(domain: string, organization: string, country: string) {
+    requestCertificate(domainArg: string, organizationArg: string, countryCodeArg: string) {
         let done = q.defer()
         this.getProfile()
             .then((profile) => {
                 let email = this.extractEmail(profile) // try to determine email address from profile
-                let bit = this.defaultRsaKeySize
-                // sanitize
-                bit = Number(bit)
-                country = this.makeSafeFileName(country)
-                domain = this.makeSafeFileName(domain)
+                countryCodeArg = this.makeSafeFileName(countryCodeArg)
+                domainArg = this.makeSafeFileName(domainArg)
                 email = this.makeSafeFileName(email)
-                organization = this.makeSafeFileName(organization)
+                organizationArg = this.makeSafeFileName(organizationArg)
                 // create key pair
-                this.createKeyPair(bit, country, organization, domain, email)
-                    .then(() => { // create key pair
-                        this.requestSigning(domain, (cert) => { // send CSR
+                this.createKeyPair({
+                    keyBitSize: 4096,
+                    countryCode: countryCodeArg,
+                    organization: organizationArg,
+                    commonName: domainArg,
+                    emailAddress: email
+                })
+                    .then(() => {
+                        this.requestSigning(domainArg, (cert) => { // send CSR
                             if ((cert instanceof Buffer) || (typeof cert === 'string')) { // valid certificate data
-                                fs.writeFile(domain + '.der', cert, (err) => { // sanitize domain name for file path
+                                fs.writeFile(domainArg + '.der', cert, (err) => { // sanitize domain name for file path
                                     if (err instanceof Object) { // file system error
                                         if (this.jWebClient.verbose) {
                                             console.error('Error  : File system error', err['code'], 'while writing certificate to file')
@@ -509,9 +499,18 @@ export class AcmeClient {
      * @param {string} e - email address, expected to be already sanitized
      * @param {function} callback
      */
-    createKeyPair(bit, c, o, cn, e) {
+    createKeyPair(optionsArg: {
+        keyBitSize: number,
+        countryCode: string,
+        organization: string,
+        commonName: string,
+        emailAddress: string
+    }) {
         let done = q.defer()
-        let openssl = `openssl req -new -nodes -newkey rsa:${bit} -sha256 -subj "/C=${c}/O=${o}/CN=${cn}/emailAddress=${e}" -keyout \"${cn}.key\" -outform der -out \"${cn}.csr\"`
+        let openssl = `openssl req -new -nodes -newkey rsa:${optionsArg.keyBitSize} `
+            + `-sha256 `
+            + `-subj "/C=${optionsArg.countryCode}/O=${optionsArg.organization}/CN=${optionsArg.commonName}/emailAddress=${optionsArg.emailAddress}" `
+            + `-keyout \"${optionsArg.commonName}.key\" -outform der -out \"${optionsArg.commonName}.csr\"`
         console.error('Action : Creating key pair')
         if (this.jWebClient.verbose) {
             console.error('Running:', openssl)
@@ -646,12 +645,6 @@ export class AcmeClient {
      * @return {string}
      */
     extractEmail(profile) {
-        /*jshint -W069 */
-        if (!(profile instanceof Object) || !(profile['contact'] instanceof Array)) {
-            // dereference
-            profile = null
-            return void 0 // invalid profile
-        }
         let prefix = 'mailto:'
         let email = profile.contact.filter((entry) => {
             if (typeof entry !== 'string') {

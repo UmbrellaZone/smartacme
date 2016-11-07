@@ -10,6 +10,9 @@ describe('smartacme', function(){
         testAcme = new smartacme.SmartAcme()
         should(testAcme).be.instanceOf(smartacme.SmartAcme)
     })
+    it('should have created keyPair', function() {
+        
+    })
     it('should register a new account', function() {
         testAcme.createAccount()
     })
