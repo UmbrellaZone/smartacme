@@ -14,6 +14,6 @@ describe('smartacme', function(){
         
     })
     it('should register a new account', function() {
-        testAcme.createAccount()
+        testAcme.createAccount().catch()
     })
 })

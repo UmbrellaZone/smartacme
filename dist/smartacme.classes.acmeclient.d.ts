@@ -1,5 +1,6 @@
 /// <reference types="q" />
 import * as q from 'q';
+import { JWebClient } from './smartacme.classes.jwebclient';
 import { IReqResArg } from './smartacme.classes.jwebclient';
 /**
  * @class AcmeClient
@@ -15,7 +16,7 @@ export declare class AcmeClient {
     directoryUrl: string;
     emailDefaultPrefix: string;
     emailOverride: string;
-    jWebClient: any;
+    jWebClient: JWebClient;
     regLink: string;
     tosLink: string;
     webroot: string;
@@ -34,7 +35,7 @@ export declare class AcmeClient {
      * @param {Object} payload
      * @param {function} callback - first argument will be the answer object
      */
-    newRegistration(payload: any, callback: any): void;
+    newRegistration(payload: any): q.Promise<{}>;
     /**
      * getRegistration
      * @description get information about registration
@@ -49,14 +50,14 @@ export declare class AcmeClient {
      * @param {string} domain
      * @param {function} callback - first argument will be the answer object
      */
-    authorizeDomain(domain: any, callback: any): void;
+    authorizeDomain(domain: any): q.Promise<{}>;
     /**
      * acceptChallenge
      * @description tell server which challenge will be accepted
      * @param {Object} challenge
      * @param {function} callback - first argument will be the answer object
      */
-    acceptChallenge(challenge: any, callback: any): void;
+    acceptChallenge(challenge?: {}): q.Promise<{}>;
     /**
      * pollUntilValid
      * @description periodically (with exponential back-off) check status of challenge
@@ -64,7 +65,7 @@ export declare class AcmeClient {
      * @param {function} callback - first argument will be the answer object
      * @param {number} retry - factor of delay
      */
-    pollUntilValid(uri: any, callback: any, retry?: number): void;
+    pollUntilValid(uri: any, retry?: number): q.Promise<{}>;
     /**
      * pollUntilIssued
      * @description periodically (with exponential back-off) check status of CSR
@@ -72,14 +73,14 @@ export declare class AcmeClient {
      * @param {function} callback - first argument will be the answer object
      * @param {number} retry - factor of delay
      */
-    pollUntilIssued(uri: any, callback: any, retry?: number): void;
+    pollUntilIssued(uri: any, retry?: number): q.Promise<{}>;
     /**
      * requestSigning
      * @description send CSR
      * @param {string} domain - expected to be already sanitized
      * @param {function} callback - first argument will be the answer object
      */
-    requestSigning(commonName: any, callback: any): q.Promise<{}>;
+    requestSigning(commonName: any): q.Promise<{}>;
     /**
      * retrieves profile of user (will make directory lookup and registration check)
      * @param {function} callback - first argument will be the answer object
@@ -91,14 +92,14 @@ export declare class AcmeClient {
      * @param {string} email
      * @param {function} callback - first argument will be the registration URI
      */
-    createAccount(email: any, callback: any): void;
+    createAccount(email: string): q.Promise<{}>;
     /**
      * agreeTos
      * @description agree with terms of service (update agreement status in profile)
      * @param {string} tosLink
      * @param {function} callback - first argument will be the answer object
      */
-    agreeTos(tosLink: any, callback: any): void;
+    agreeTos(tosLink: any): q.Promise<{}>;
     /**
      * Entry-Point: Request certificate
      */

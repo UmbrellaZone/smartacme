@@ -12,9 +12,9 @@ export class SmartAcme {
      * creates an account
      */
     createAccount() {
-        this.acmeClient.createAccount('test@bleu.de',(answer) => {
+        this.acmeClient.createAccount('test@bleu.de').then((answer) => {
             console.log(answer)
-        })
+        }).catch(err => { console.log(err) })
     }
 
     /**

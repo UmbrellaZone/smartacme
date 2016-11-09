@@ -32,7 +32,7 @@ export class AcmeClient {
     directoryUrl: string
     emailDefaultPrefix: string
     emailOverride: string
-    jWebClient: any
+    jWebClient = new JWebClient()
     regLink: string
     tosLink: string
     webroot: string
@@ -72,11 +72,6 @@ export class AcmeClient {
          * @desc Email address to use
          */
         this.emailOverride = null // {string}
-        /**
-         * @member {module:JWebClient~JWebClient} module:AcmeClient~AcmeClient#jWebClient
-         * @desc Reference to JSON-Web-Client
-         */
-        this.jWebClient = new JWebClient() // {JWebClient}
         /**
          * @member {string} module:AcmeClient~AcmeClient#regLink
          * @desc Cached registration URI
@@ -131,15 +126,14 @@ export class AcmeClient {
      * @param {Object} payload
      * @param {function} callback - first argument will be the answer object
      */
-    newRegistration(payload, callback) {
+    newRegistration(payload) {
+        let done = q.defer()
         if (!(payload instanceof Object)) {
             payload = {} // ensure payload is object
         }
         payload.resource = 'new-reg'
-        this.jWebClient.post(this.directory['new-reg'], payload, callback, callback)
-        // dereference
-        callback = null
-        payload = null
+        this.jWebClient.post(this.directory['new-reg'], payload)
+        return done.promise
     }
 
     /**
@@ -152,29 +146,30 @@ export class AcmeClient {
     getRegistration(uri, payload) {
         let done = q.defer<IReqResArg>()
         payload['resource'] = 'reg'
-        this.jWebClient.post(uri, payload, (ans, res) => {
-            if (ans instanceof Object) {
-                this.clientProfilePubKey = ans.key // cache or reset returned public key
-                if ((res instanceof Object) && (res['headers'] instanceof Object)) {
-                    let linkStr = res.headers['link']
-                    if (typeof linkStr === 'string') {
-                        let tosLink = this.getTosLink(linkStr)
-                        if (typeof tosLink === 'string') {
-                            this.tosLink = tosLink // cache TOS link
+        this.jWebClient.post(uri, payload)
+            .then((reqResArg: IReqResArg) => {
+                if (reqResArg.ans instanceof Object) {
+                    this.clientProfilePubKey = reqResArg.ans.key // cache or reset returned public key
+                    if ((reqResArg.res instanceof Object) && (reqResArg.res['headers'] instanceof Object)) {
+                        let linkStr = reqResArg.res.headers['link']
+                        if (typeof linkStr === 'string') {
+                            let tosLink = this.getTosLink(linkStr)
+                            if (typeof tosLink === 'string') {
+                                this.tosLink = tosLink // cache TOS link
+                            } else {
+                                this.tosLink = null // reset TOS link
+                            }
                         } else {
                             this.tosLink = null // reset TOS link
                         }
                     } else {
                         this.tosLink = null // reset TOS link
                     }
+                    done.resolve({ ans: reqResArg.ans, res: reqResArg.res })
                 } else {
-                    this.tosLink = null // reset TOS link
+                    done.reject(new Error('some error'))
                 }
-                done.resolve({ ans: ans, res: res })
-            } else {
-                done.reject(new Error('some error'))
-            }
-        })
+            })
         return done.promise
     }
 
@@ -184,65 +179,71 @@ export class AcmeClient {
      * @param {string} domain
      * @param {function} callback - first argument will be the answer object
      */
-    authorizeDomain(domain, callback) {
-        /*jshint -W069 */
-        if (typeof callback !== 'function') {
-            callback = this.emptyCallback // ensure callback is function
-        }
+    authorizeDomain(domain) {
+        let done = q.defer()
         this.getProfile()
             .then(profile => {
                 if (!(profile instanceof Object)) {
-                    callback(false) // no profile returned
+                    done.reject(new Error('no profile returned'))
                 } else {
-                    this.jWebClient.post(this.directory['new-authz'], this.makeDomainAuthorizationRequest(domain), (ans, res) => {
-                        if ((res instanceof Object) && (res['statusCode'] === 403)) { // if unauthorized
-                            this.agreeTos(this.tosLink, (ans_, res_) => { // agree to TOS
-                                if ( // if TOS were agreed successfully
-                                    (res_ instanceof Object)
-                                    && (res_['statusCode'] >= 200)
-                                    && (res_['statusCode'] <= 400)
-                                ) {
-                                    this.authorizeDomain(domain, callback)  // try authorization again
-                                } else {
-                                    callback(false) // agreement failed
-                                }
-                            })
-                        } else {
-                            if (
-                                (res instanceof Object)
-                                && (res['headers'] instanceof Object)
-                                && (typeof res.headers['location'] === 'string')
-                                && (ans instanceof Object)
-                            ) {
-                                let poll_uri = res.headers['location'] // status URI for polling
-                                let challenge = this.selectChallenge(ans, 'http-01') // select simple http challenge
-                                if (challenge instanceof Object) { // desired challenge is in list
-                                    this.prepareChallenge(domain, challenge, () => { // prepare all objects and files for challenge
-                                        // reset
-                                        ans = null
-                                        res = null
-                                        // accept challenge
-                                        this.acceptChallenge(challenge, (ans, res) => {
-                                            if (
-                                                (res instanceof Object)
-                                                && (res['statusCode'] < 400) // server confirms challenge acceptance
-                                            ) {
-                                                this.pollUntilValid(poll_uri, callback) // poll status until server states success
-                                            } else {
-                                                callback(false) // server did not confirm challenge acceptance
-                                            }
-                                        })
+                    this.jWebClient.post(this.directory['new-authz'], this.makeDomainAuthorizationRequest(domain))
+                        .then((reqResArg: IReqResArg) => {
+                            if ((reqResArg.res instanceof Object) && (reqResArg.res['statusCode'] === 403)) { // if unauthorized
+                                this.agreeTos(this.tosLink)
+                                    .then((reqResArg2: IReqResArg) => { // agree to TOS
+                                        if ( // if TOS were agreed successfully
+                                            (reqResArg.res instanceof Object)
+                                            && (reqResArg2.res['statusCode'] >= 200)
+                                            && (reqResArg2.res['statusCode'] <= 400)
+                                        ) {
+                                            this.authorizeDomain(domain).then(() => {
+                                                done.resolve()
+                                            }) // try authorization again
+                                        } else {
+                                            done.reject(false) // agreement failed
+                                        }
                                     })
-                                } else {
-                                    callback(false) // desired challenge is not in list
-                                }
                             } else {
-                                callback(false) // server did not respond with status URI
+                                if (
+                                    (reqResArg.res instanceof Object)
+                                    && (reqResArg.res['headers'] instanceof Object)
+                                    && (typeof reqResArg.res.headers['location'] === 'string')
+                                    && (reqResArg.ans instanceof Object)
+                                ) {
+                                    let poll_uri = reqResArg.res.headers['location'] // status URI for polling
+                                    let challenge = this.selectChallenge(reqResArg.ans, 'http-01') // select simple http challenge
+                                    if (challenge instanceof Object) { // desired challenge is in list
+                                        this.prepareChallenge(domain, challenge, () => { // prepare all objects and files for challenge
+                                            // reset
+                                            reqResArg.ans = null
+                                            reqResArg.res = null
+                                            // accept challenge
+                                            this.acceptChallenge(challenge)
+                                                .then((reqResArg2: IReqResArg) => {
+                                                    if (
+                                                        (reqResArg2.res instanceof Object)
+                                                        && (reqResArg2.res['statusCode'] < 400) // server confirms challenge acceptance
+                                                    ) {
+                                                        this.pollUntilValid(poll_uri)
+                                                            .then(() => {
+                                                                done.resolve()
+                                                            }) // poll status until server states success
+                                                    } else {
+                                                        done.reject(false) // server did not confirm challenge acceptance
+                                                    }
+                                                })
+                                        })
+                                    } else {
+                                        done.reject(false) // desired challenge is not in list
+                                    }
+                                } else {
+                                    done.reject(false) // server did not respond with status URI
+                                }
                             }
-                        }
-                    })
+                        })
                 }
             })
+        return done.promise
     }
 
     /**
@@ -251,15 +252,13 @@ export class AcmeClient {
      * @param {Object} challenge
      * @param {function} callback - first argument will be the answer object
      */
-    acceptChallenge(challenge, callback) {
-        /*jshint -W069 */
-        if (!(challenge instanceof Object)) {
-            challenge = {} // ensure challenge is object
-        }
-        this.jWebClient.post(challenge['uri'], this.makeChallengeResponse(challenge), callback)
-        // dereference
-        callback = null
-        challenge = null
+    acceptChallenge(challenge = {}) {
+        let done = q.defer()
+        this.jWebClient.post(challenge['uri'], this.makeChallengeResponse(challenge))
+            .then(() => {
+                done.resolve()
+            })
+        return done.promise
     }
 
     /**
@@ -269,28 +268,27 @@ export class AcmeClient {
      * @param {function} callback - first argument will be the answer object
      * @param {number} retry - factor of delay
      */
-    pollUntilValid(uri, callback, retry = 1) {
-        /*jshint -W069 */
-        if (typeof callback !== 'function') {
-            callback = this.emptyCallback // ensure callback is function
-        }
+    pollUntilValid(uri, retry = 1) {
+        let done = q.defer()
         if (retry > 128) {
-            callback(false) // stop if retry value exceeds maximum
+            done.reject(false) // stop if retry value exceeds maximum
         } else {
-            this.jWebClient.get(uri, (ans, res) => {
-                if (!(ans instanceof Object)) {
-                    callback(false) // invalid answer
-                } else {
-                    if (ans['status'] === 'pending') { // still pending
-                        setTimeout(() => {
-                            this.pollUntilValid(uri, callback, retry * 2) // retry
-                        }, retry * 500)
+            this.jWebClient.get(uri)
+                .then((reqResArg) => {
+                    if (!(reqResArg.ans instanceof Object)) {
+                        done.reject(false) // invalid answer
                     } else {
-                        callback(ans, res) // challenge complete
+                        if (reqResArg.ans['status'] === 'pending') { // still pending
+                            setTimeout(() => {
+                                this.pollUntilValid(uri, retry * 2) // retry
+                            }, retry * 500)
+                        } else {
+                            done.resolve() // challenge complete
+                        }
                     }
-                }
-            })
+                })
         }
+        return done.promise
     }
 
     /**
@@ -300,28 +298,27 @@ export class AcmeClient {
      * @param {function} callback - first argument will be the answer object
      * @param {number} retry - factor of delay
      */
-    pollUntilIssued(uri, callback, retry = 1) {
-        /*jshint -W069 */
-        if (typeof callback !== 'function') {
-            callback = this.emptyCallback // ensure callback is function
-        }
+    pollUntilIssued(uri, retry = 1) {
+        let done = q.defer()
         if (retry > 128) {
-            callback(false) // stop if retry value exceeds maximum
+            done.reject(false) // stop if retry value exceeds maximum
         } else {
-            this.jWebClient.get(uri, (ans, res) => {
-                if ((ans instanceof Buffer) && (ans.length > 0)) {
-                    callback(ans) // certificate was returned with answer
-                } else {
-                    if ((res instanceof Object) && (res['statusCode'] < 400)) { // still pending
-                        setTimeout(() => {
-                            this.pollUntilIssued(uri, callback, retry * 2) // retry
-                        }, retry * 500)
+            this.jWebClient.get(uri)
+                .then((reqResArg: IReqResArg) => {
+                    if ((reqResArg.ans instanceof Buffer) && (reqResArg.ans.length > 0)) {
+                        done.resolve(reqResArg.ans) // certificate was returned with answer
                     } else {
-                        callback(false) // CSR complete
+                        if ((reqResArg.res instanceof Object) && (reqResArg.res['statusCode'] < 400)) { // still pending
+                            setTimeout(() => {
+                                this.pollUntilIssued(uri, retry * 2) // retry
+                            }, retry * 500)
+                        } else {
+                            done.reject(false) // CSR complete
+                        }
                     }
-                }
-            })
+                })
         }
+        return done.promise
     }
 
     /**
@@ -330,37 +327,37 @@ export class AcmeClient {
      * @param {string} domain - expected to be already sanitized
      * @param {function} callback - first argument will be the answer object
      */
-    requestSigning(commonName, callback) {
+    requestSigning(commonName) {
         let done = q.defer()
         fs.readFile(commonName + '.csr', (err, csrBuffer: Buffer) => {
             if (err instanceof Object) { // file system error
                 if (this.jWebClient.verbose) {
                     console.error('Error  : File system error', err['code'], 'while reading key from file')
                 }
-                callback(false)
+                done.reject(false)
             } else {
                 let csr = csrBuffer.toString()
-                this.jWebClient.post(this.directory['new-cert'], this.makeCertRequest(csr, this.daysValid), (ans, res) => {
-                    if ((ans instanceof Buffer) && (ans.length > 0)) { // answer is buffer
-                        callback(ans) // certificate was returned with answer
-                    } else {
-                        if (res instanceof Object) {
-                            if ((res['statusCode'] < 400) && !ans) { // success response, but no answer was provided
-                                let headers = res['headers']
-                                if (!(headers instanceof Object)) {
-                                    headers = {}  // ensure headers is object
-                                }
-                                this.pollUntilIssued(headers['location'], callback) // poll provided status URI
-                                // dereference
-                                headers = null
-                            } else {
-                                callback((res['statusCode'] < 400) ? ans : false) // answer may be provided as string or object
-                            }
+                this.jWebClient.post(this.directory['new-cert'], this.makeCertRequest(csr, this.daysValid))
+                    .then((reqResArg: IReqResArg) => {
+                        if ((reqResArg.ans instanceof Buffer) && (reqResArg.ans.length > 0)) { // answer is buffer
+                            done.resolve(reqResArg.ans) // certificate was returned with answer
                         } else {
-                            callback(false) // invalid response
+                            if (reqResArg.res instanceof Object) {
+                                if ((reqResArg.res['statusCode'] < 400) && !reqResArg.ans) { // success response, but no answer was provided
+                                    let headers = reqResArg['headers']
+                                    if (!(headers instanceof Object)) {
+                                        headers = {}  // ensure headers is object
+                                    }
+                                    this.pollUntilIssued(headers['location'])
+                                        .then(x => { done.resolve(x) })
+                                } else {
+                                    done.resolve((reqResArg.res['statusCode'] < 400) ? reqResArg.ans : false) // answer may be provided as string or object
+                                }
+                            } else {
+                                done.reject(false) // invalid response
+                            }
                         }
-                    }
-                })
+                    })
             }
         })
         return done.promise
@@ -378,21 +375,22 @@ export class AcmeClient {
                     done.reject(new Error('server did not respond with directory'))
                 } else {
                     this.directory = dir // cache directory
-                    this.newRegistration(null, (ans, res) => { // try new registration to get registration link
-                        if (
-                            (res instanceof Object)
-                            && (res['headers'] instanceof Object)
-                            && (typeof res.headers['location'] === 'string')
-                        ) {
-                            this.regLink = res.headers['location']
-                            this.getRegistration(this.regLink, null)
-                                .then((reqResArg: IReqResArg) => {
-                                    done.resolve()
-                                }) // get registration info from link
-                        } else {
-                            done.reject(new Error('registration failed'))
-                        }
-                    })
+                    this.newRegistration(null)
+                        .then((reqResArg: IReqResArg) => { // try new registration to get registration link
+                            if (
+                                (reqResArg.res instanceof Object)
+                                && (reqResArg.res['headers'] instanceof Object)
+                                && (typeof reqResArg.res.headers['location'] === 'string')
+                            ) {
+                                this.regLink = reqResArg.res.headers['location']
+                                this.getRegistration(this.regLink, null)
+                                    .then((reqResArg: IReqResArg) => {
+                                        done.resolve()
+                                    }) // get registration info from link
+                            } else {
+                                done.reject(new Error('registration failed'))
+                            }
+                        })
                 }
             })
         return done.promise
@@ -404,34 +402,32 @@ export class AcmeClient {
      * @param {string} email
      * @param {function} callback - first argument will be the registration URI
      */
-    createAccount(email, callback) {
-        /*jshint -W069 */
+    createAccount(email: string) {
+        let done = q.defer()
         if (typeof email === 'string') {
-            if (typeof callback !== 'function') {
-                callback = this.emptyCallback // ensure callback is function
-            }
-            this.newRegistration(
-                {
-                    contact: [
-                        'mailto:' + email
-                    ]
-                },
-                (ans, res) => {
+            this.newRegistration({
+                contact: [
+                    'mailto:' + email
+                ]
+            })
+                .then((reqResArg: IReqResArg) => {
                     if (
-                        (res instanceof Object)
-                        && (res['statusCode'] === 201)
-                        && (res['headers'] instanceof Object)
-                        && (typeof res.headers['location'] === 'string')
+                        (reqResArg.res instanceof Object)
+                        && (reqResArg.res['statusCode'] === 201)
+                        && (reqResArg.res['headers'] instanceof Object)
+                        && (typeof reqResArg.res.headers['location'] === 'string')
                     ) {
-                        this.regLink = res.headers['location']
-                        callback(this.regLink) // registration URI
+                        this.regLink = reqResArg.res.headers['location']
+                        done.resolve(this.regLink) // registration URI
                     } else {
-                        callback(false) // registration failed
+                        done.reject(new Error('could not register new account')) // registration failed
                     }
                 })
+
         } else {
-            callback(false) // no email address provided
+            done.reject(new Error('no email address provided'))
         }
+        return done.promise
     }
 
     /**
@@ -440,11 +436,14 @@ export class AcmeClient {
      * @param {string} tosLink
      * @param {function} callback - first argument will be the answer object
      */
-    agreeTos(tosLink, callback) {
+    agreeTos(tosLink) {
         let done = q.defer()
         this.getRegistration(this.regLink, {
             'Agreement': tosLink // terms of service URI
-        }).then(() => { done.resolve() })
+        }).then(() => {
+            done.resolve()
+        })
+        return done.promise
     }
 
     /**
@@ -468,22 +467,23 @@ export class AcmeClient {
                     emailAddress: email
                 })
                     .then(() => {
-                        this.requestSigning(domainArg, (cert) => { // send CSR
-                            if ((cert instanceof Buffer) || (typeof cert === 'string')) { // valid certificate data
-                                fs.writeFile(domainArg + '.der', cert, (err) => { // sanitize domain name for file path
-                                    if (err instanceof Object) { // file system error
-                                        if (this.jWebClient.verbose) {
-                                            console.error('Error  : File system error', err['code'], 'while writing certificate to file')
+                        this.requestSigning(domainArg)
+                            .then((cert) => { // send CSR
+                                if ((cert instanceof Buffer) || (typeof cert === 'string')) { // valid certificate data
+                                    fs.writeFile(domainArg + '.der', cert, (err) => { // sanitize domain name for file path
+                                        if (err instanceof Object) { // file system error
+                                            if (this.jWebClient.verbose) {
+                                                console.error('Error  : File system error', err['code'], 'while writing certificate to file')
+                                            }
+                                            done.reject(err)
+                                        } else {
+                                            done.resolve()  // CSR complete and certificate written to file system
                                         }
-                                        done.reject(err)
-                                    } else {
-                                        done.resolve()  // CSR complete and certificate written to file system
-                                    }
-                                })
-                            } else {
-                                done.reject('invalid certificate data')
-                            }
-                        })
+                                    })
+                                } else {
+                                    done.reject('invalid certificate data')
+                                }
+                            })
 
                     })
             })
