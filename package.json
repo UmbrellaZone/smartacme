@@ -23,11 +23,10 @@
   },
   "homepage": "https://gitlab.com/pushrocks/smartacme#README",
   "dependencies": {
-    "@types/base64url": "^2.0.3",
-    "jwa": "^1.1.3",
+    "@types/q": "0.x.x",
+    "le-acme-core": "^2.0.7",
     "q": "^1.4.1",
-    "rsa-pem-to-jwk": "^1.1.3",
-    "shelljs": "^0.7.5",
+    "rsa-compat": "^1.2.7",
     "smartfile": "^4.1.0",
     "smartstring": "^2.0.20",
     "typings-global": "^1.0.14"

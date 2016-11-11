@@ -1,16 +1,29 @@
-import * as acmeclient from './smartacme.classes.acmeclient';
+/// <reference types="q" />
+import 'typings-global';
+import * as q from 'q';
+/**
+ * class SmartAcme exports methods for maintaining SSL Certificates
+ */
 export declare class SmartAcme {
-    acmeAccount: AcmeAccount;
-    acmeClient: acmeclient.AcmeClient;
-    constructor(directoryUrlArg?: string);
+    preparedBool: boolean;
+    acmeUrls: any;
+    productionBool: boolean;
+    keyPair: any;
+    constructor(productionArg?: boolean);
     /**
-     * creates an account
+     * prepares the SmartAcme class
      */
-    createAccount(): void;
+    prepareAcme(): q.Promise<{}>;
     /**
-     * returns the openssl key pair for
+     * creates an account if not currently present in module
      */
-    getKeyPair(): any;
-}
-export declare class AcmeAccount {
+    createAccount(): q.Promise<{}>;
+    /**
+     * creates a keyPair
+     */
+    createKeyPair(): q.Promise<{}>;
+    /**
+     * gets the Acme Urls
+     */
+    getAcmeUrls(): q.Promise<{}>;
 }

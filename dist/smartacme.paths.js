@@ -1,5 +1,7 @@
 "use strict";
-const plugins = require("./smartacme.plugins");
-exports.packageDir = plugins.path.join(__dirname, '../');
-exports.assetDir = plugins.path.join(exports.packageDir, 'assets/');
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic21hcnRhY21lLnBhdGhzLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vdHMvc21hcnRhY21lLnBhdGhzLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQSwrQ0FBOEM7QUFFbkMsUUFBQSxVQUFVLEdBQUcsT0FBTyxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsU0FBUyxFQUFDLEtBQUssQ0FBQyxDQUFBO0FBQy9DLFFBQUEsUUFBUSxHQUFHLE9BQU8sQ0FBQyxJQUFJLENBQUMsSUFBSSxDQUFDLGtCQUFVLEVBQUMsU0FBUyxDQUFDLENBQUEifQ==
+const path = require("path");
+const smartfile = require("smartfile");
+exports.packageDir = path.join(__dirname, '../');
+exports.assetDir = path.join(exports.packageDir, 'assets/');
+smartfile.fs.ensureDirSync(exports.assetDir);
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic21hcnRhY21lLnBhdGhzLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vdHMvc21hcnRhY21lLnBhdGhzLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQSw2QkFBNEI7QUFDNUIsdUNBQXNDO0FBRTNCLFFBQUEsVUFBVSxHQUFHLElBQUksQ0FBQyxJQUFJLENBQUMsU0FBUyxFQUFDLEtBQUssQ0FBQyxDQUFBO0FBQ3ZDLFFBQUEsUUFBUSxHQUFHLElBQUksQ0FBQyxJQUFJLENBQUMsa0JBQVUsRUFBQyxTQUFTLENBQUMsQ0FBQTtBQUNyRCxTQUFTLENBQUMsRUFBRSxDQUFDLGFBQWEsQ0FBQyxnQkFBUSxDQUFDLENBQUEifQ==

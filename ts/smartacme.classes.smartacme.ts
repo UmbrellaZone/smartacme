@@ -1,30 +1,114 @@
-import * as plugins from './smartacme.plugins'
-import * as acmeclient from './smartacme.classes.acmeclient'
+import 'typings-global'
+import * as q from 'q'
+import * as path from 'path'
+import * as smartfile from 'smartfile'
+import * as smartstring from 'smartstring'
+import * as paths from './smartacme.paths'
 
+let ACME = require('le-acme-core').ACME.create()
+let RSA = require('rsa-compat').RSA
+
+let bitlen = 1024
+let exp = 65537
+let options = {
+    public: true,
+    pem: true,
+    internal: true
+}
+/**
+ * class SmartAcme exports methods for maintaining SSL Certificates
+ */
 export class SmartAcme {
-    acmeAccount: AcmeAccount
-    acmeClient: acmeclient.AcmeClient
-    constructor(directoryUrlArg: string = 'https://acme-staging.api.letsencrypt.org/directory') {
-        this.acmeClient = new acmeclient.AcmeClient(directoryUrlArg)
+    preparedBool: boolean = false
+    acmeUrls: any
+    productionBool: boolean
+    keyPair: any
+    constructor(productionArg: boolean = false) {
+        this.productionBool = productionArg
     }
 
     /**
-     * creates an account
+     * prepares the SmartAcme class
+     */
+    prepareAcme() {
+        let done = q.defer()
+        if (this.preparedBool === false) {
+            this.getAcmeUrls()
+                .then(() => {
+                    return this.createKeyPair()
+                })
+                .then((x) => {
+                    console.log('prepared smartacme instance')
+                    done.resolve()
+                })
+        } else {
+            done.resolve()
+        }
+        return done.promise
+    }
+
+    /**
+     * creates an account if not currently present in module
      */
     createAccount() {
-        this.acmeClient.createAccount('test@bleu.de').then((answer) => {
-            console.log(answer)
-        }).catch(err => { console.log(err) })
+        let done = q.defer()
+        this.prepareAcme()
+            .then(() => {
+                return this.createKeyPair()
+            })
+            .then(() => {
+                let options = {
+                    newRegUrl: this.acmeUrls.newReg,
+                    email: 'domains@lossless.org', // valid email (server checks MX records)
+                    accountKeypair: { // privateKeyPem or privateKeyJwt 
+                        privateKeyPem: this.keyPair
+                    },
+                    agreeToTerms: function (tosUrl, done) {
+                        done(null, tosUrl)
+                    }
+                }
+                ACME.registerNewAccount(options, (err, regr) => {
+                    if(err) {
+                        console.log(err)
+                        done.reject(err)
+                    }
+                    done.resolve(regr)
+                }) // returns "regr" registration data
+            }).catch(err => { console.log(err) })
+
+        return done.promise
     }
 
     /**
-     * returns the openssl key pair for 
+     * creates a keyPair
      */
-    getKeyPair() {
-        return this.acmeClient.getKeyPair()
+    createKeyPair() {
+        let done = q.defer()
+        RSA.generateKeypair(bitlen, exp, options, (err, keypair) => {
+            if (err) {
+                console.log(err)
+                done.reject(err)
+            }
+            console.log(keypair)
+            this.keyPair = keypair
+        })
+        done.resolve()
+        return done.promise
     }
-}
 
-export class AcmeAccount {
-
+    /**
+     * gets the Acme Urls
+     */
+    getAcmeUrls() {
+        let done = q.defer()
+        ACME.getAcmeUrls(ACME.stagingServerUrl, (err, urls) => {
+            if (err) {
+                throw err
+            }
+            this.acmeUrls = urls
+            console.log(this.acmeUrls)
+            done.resolve()
+        })
+        return done.promise
+    }
 }
