@@ -54,9 +54,6 @@ export class SmartAcme {
         let done = q.defer()
         this.prepareAcme()
             .then(() => {
-                return this.createKeyPair()
-            })
-            .then(() => {
                 let options = {
                     newRegUrl: this.acmeUrls.newReg,
                     email: 'domains@lossless.org', // valid email (server checks MX records)
@@ -73,7 +70,7 @@ export class SmartAcme {
                         done.reject(err)
                     }
                     done.resolve(regr)
-                }) // returns "regr" registration data
+                })
             }).catch(err => { console.log(err) })
 
         return done.promise
