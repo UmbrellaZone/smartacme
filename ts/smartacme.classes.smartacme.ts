@@ -88,8 +88,8 @@ export class SmartAcme {
             }
             console.log(keypair)
             this.keyPair = keypair
+            done.resolve()
         })
-        done.resolve()
         return done.promise
     }
 
