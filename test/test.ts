@@ -34,9 +34,9 @@ describe('smartacme', function () {
         })
     })
 
-    it('should request a certifiacate for a domain', function(done) {
+    it('should request a challenge for a domain', function(done) {
         this.timeout(10000)
-        testAcme.requestCertificate('bleu.de').then(() => {
+        testAcme.requestChallenge('bleu.de').then(() => {
             done()
         })
     })

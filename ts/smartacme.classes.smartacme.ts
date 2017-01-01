@@ -9,6 +9,9 @@ import * as paths from './smartacme.paths'
 
 import { SmartacmeHelper, IRsaKeypair } from './smartacme.classes.helper'
 
+export type TChallenge = 'dns-01' | 'http-01'
+
+
 /**
  * class SmartAcme exports methods for maintaining SSL Certificates
  */
@@ -88,7 +91,7 @@ export class SmartAcme {
         let tosPart = this.link.split(',')[1]
         let tosLinkPortion = tosPart.split(';')[0]
         let url = tosLinkPortion.split(';')[0].trim().replace(/[<>]/g, '')
-        this.rawacmeClient.post(this.location,{Agreement: url, resource: 'reg'}, (err, res) => {
+        this.rawacmeClient.post(this.location, { Agreement: url, resource: 'reg' }, (err, res) => {
             if (err) {
                 console.log(err)
                 done.reject(err)
@@ -100,9 +103,11 @@ export class SmartAcme {
     }
 
     /**
-     * requests a certificate
+     * requests a challenge for a domain
+     * @param domainNameArg - the domain name to request a challenge for
+     * @param challengeType - the challenge type to request
      */
-    requestCertificate(domainNameArg) {
+    requestChallenge(domainNameArg: string, challengeTypeArg: TChallenge = 'dns-01') {
         let done = q.defer()
         this.rawacmeClient.newAuthz(
             {
@@ -119,9 +124,55 @@ export class SmartAcme {
                     done.reject(err)
                 }
                 console.log(JSON.stringify(res.body))
-                done.resolve()
+                let dnsChallenge = res.body.challenges.filter(x => {
+                    return x.type === challengeTypeArg
+                })[0]
+                this.acceptChallenge(dnsChallenge)
+                    .then(x => {
+                        done.resolve(x)
+                    })
             }
         )
         return done.promise
     }
+
+    /**
+     * getCertificate - takes care of cooldown, validation polling and certificate retrieval
+     */
+    getCertificate() {
+
+    }
+
+    /**
+     * accept a challenge - for private use only
+     */
+    private acceptChallenge(challenge) {
+        let done = q.defer()
+
+        let authKey: string = rawacme.keyAuthz(challenge.token, this.keyPair.publicKey)
+        let dnsKeyHash: string = rawacme.dnsKeyAuthzHash(authKey) // needed if dns challenge is chosen
+
+        console.log(authKey)
+
+        this.rawacmeClient.post(
+            challenge.uri,
+            {
+                resource: 'challenge',
+                keyAuthorization: authKey
+            },
+            this.keyPair,
+            (err, res) => {
+                if (err) {
+                    console.log(err)
+                    done.reject(err)
+                }
+                console.log('acceptChallenge:')
+                console.log(JSON.stringify(res.body))
+                done.resolve(dnsKeyHash)
+            }
+        )
+        return done.promise
+    }
+
+
 }

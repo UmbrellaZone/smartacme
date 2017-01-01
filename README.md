@@ -21,4 +21,16 @@ acme implementation in TypeScript
 ## Usage
 Use TypeScript for best in class instellisense.
 
+```javascript
+import { SmartAcme } from 'smartacme'
+
+let smac = new SmartAcme()
+
+let myAccount = smac.getAccount() // optionally accepts a filePath Arg with a stored acmeaccount.json
+let myCert = myAccount.getChallenge('example.com','dns-01') // will return a dnsHash to set in your DNS record
+myCert.get().then(() => {
+    console.log(myCert.certificate) // your certificate, ready to use in whatever way you prefer
+})
+```
+
 [![npm](https://push.rocks/assets/repo-header.svg)](https://push.rocks)

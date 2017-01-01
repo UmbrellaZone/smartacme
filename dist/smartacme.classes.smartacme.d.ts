@@ -2,6 +2,7 @@
 import 'typings-global';
 import * as q from 'q';
 import { SmartacmeHelper, IRsaKeypair } from './smartacme.classes.helper';
+export declare type TChallenge = 'dns-01' | 'http-01';
 /**
  * class SmartAcme exports methods for maintaining SSL Certificates
  */
@@ -25,7 +26,17 @@ export declare class SmartAcme {
     createAccount(): q.Promise<{}>;
     agreeTos(): q.Promise<{}>;
     /**
-     * requests a certificate
+     * requests a challenge for a domain
+     * @param domainNameArg - the domain name to request a challenge for
+     * @param challengeType - the challenge type to request
      */
-    requestCertificate(domainNameArg: any): q.Promise<{}>;
+    requestChallenge(domainNameArg: string, challengeTypeArg?: TChallenge): q.Promise<{}>;
+    /**
+     * getCertificate - takes care of cooldown, validation polling and certificate retrieval
+     */
+    getCertificate(): void;
+    /**
+     * accept a challenge - for private use only
+     */
+    private acceptChallenge(challenge);
 }
