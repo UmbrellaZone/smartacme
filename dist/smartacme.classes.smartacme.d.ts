@@ -10,6 +10,9 @@ export declare class SmartAcme {
     acmeUrl: string;
     productionBool: boolean;
     keyPair: IRsaKeypair;
+    location: string;
+    link: string;
+    rawacmeClient: any;
     JWK: any;
     /**
      * the constructor for class SmartAcme
@@ -20,4 +23,9 @@ export declare class SmartAcme {
      * @executes ASYNC
      */
     createAccount(): q.Promise<{}>;
+    agreeTos(): q.Promise<{}>;
+    /**
+     * requests a certificate
+     */
+    requestCertificate(domainNameArg: any): q.Promise<{}>;
 }
