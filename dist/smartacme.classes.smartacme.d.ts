@@ -1,29 +1,23 @@
 /// <reference types="q" />
 import 'typings-global';
 import * as q from 'q';
+import { SmartacmeHelper, IRsaKeypair } from './smartacme.classes.helper';
 /**
  * class SmartAcme exports methods for maintaining SSL Certificates
  */
 export declare class SmartAcme {
-    preparedBool: boolean;
-    acmeUrls: any;
+    helper: SmartacmeHelper;
+    acmeUrl: string;
     productionBool: boolean;
-    keyPair: any;
+    keyPair: IRsaKeypair;
+    JWK: any;
+    /**
+     * the constructor for class SmartAcme
+     */
     constructor(productionArg?: boolean);
     /**
-     * prepares the SmartAcme class
-     */
-    prepareAcme(): q.Promise<{}>;
-    /**
      * creates an account if not currently present in module
+     * @executes ASYNC
      */
     createAccount(): q.Promise<{}>;
-    /**
-     * creates a keyPair
-     */
-    createKeyPair(): q.Promise<{}>;
-    /**
-     * gets the Acme Urls
-     */
-    getAcmeUrls(): q.Promise<{}>;
 }

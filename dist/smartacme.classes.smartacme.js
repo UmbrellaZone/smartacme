@@ -1,101 +1,60 @@
 "use strict";
 require("typings-global");
 const q = require("q");
-let ACME = require('le-acme-core').ACME.create();
-let RSA = require('rsa-compat').RSA;
-let bitlen = 1024;
-let exp = 65537;
-let options = {
-    public: true,
-    pem: true,
-    internal: true
-};
+let rsaKeygen = require('rsa-keygen');
+let rawacme = require('rawacme');
+const smartacme_classes_helper_1 = require("./smartacme.classes.helper");
 /**
  * class SmartAcme exports methods for maintaining SSL Certificates
  */
 class SmartAcme {
-    constructor(productionArg = false) {
-        this.preparedBool = false;
-        this.productionBool = productionArg;
-    }
     /**
-     * prepares the SmartAcme class
+     * the constructor for class SmartAcme
      */
-    prepareAcme() {
-        let done = q.defer();
-        if (this.preparedBool === false) {
-            this.getAcmeUrls()
-                .then(() => {
-                return this.createKeyPair();
-            })
-                .then((x) => {
-                console.log('prepared smartacme instance');
-                done.resolve();
-            });
+    constructor(productionArg = false) {
+        this.productionBool = productionArg;
+        this.helper = new smartacme_classes_helper_1.SmartacmeHelper();
+        this.keyPair = this.helper.createKeypair();
+        if (this.productionBool) {
+            this.acmeUrl = rawacme.LETSENCRYPT_STAGING_URL;
         }
         else {
-            done.resolve();
+            this.acmeUrl = rawacme.LETSENCRYPT_URL;
         }
-        return done.promise;
     }
     /**
      * creates an account if not currently present in module
+     * @executes ASYNC
      */
     createAccount() {
         let done = q.defer();
-        this.prepareAcme()
-            .then(() => {
-            let options = {
-                newRegUrl: this.acmeUrls.newReg,
-                email: 'domains@lossless.org',
-                accountKeypair: {
-                    privateKeyPem: this.keyPair
-                },
-                agreeToTerms: function (tosUrl, done) {
-                    done(null, tosUrl);
-                }
-            };
-            ACME.registerNewAccount(options, (err, regr) => {
-                if (err) {
-                    console.log(err);
-                    done.reject(err);
-                }
-                done.resolve(regr);
-            });
-        }).catch(err => { console.log(err); });
-        return done.promise;
-    }
-    /**
-     * creates a keyPair
-     */
-    createKeyPair() {
-        let done = q.defer();
-        RSA.generateKeypair(bitlen, exp, options, (err, keypair) => {
+        rawacme.createClient({
+            url: this.acmeUrl,
+            publicKey: this.keyPair.publicKey,
+            privateKey: this.keyPair.privateKey
+        }, (err, client) => {
             if (err) {
+                console.error('smartacme: something went wrong:');
                 console.log(err);
                 done.reject(err);
+                return;
             }
-            console.log(keypair);
-            this.keyPair = keypair;
-            done.resolve();
-        });
-        return done.promise;
-    }
-    /**
-     * gets the Acme Urls
-     */
-    getAcmeUrls() {
-        let done = q.defer();
-        ACME.getAcmeUrls(ACME.stagingServerUrl, (err, urls) => {
-            if (err) {
-                throw err;
-            }
-            this.acmeUrls = urls;
-            console.log(this.acmeUrls);
-            done.resolve();
+            client.newReg({
+                contact: ['mailto:domains@lossless.org']
+            }, (err, res) => {
+                if (err) {
+                    console.error('smartacme: something went wrong:');
+                    console.log(err);
+                    done.reject(err);
+                    return;
+                }
+                this.JWK = res.body.key;
+                console.log(this.JWK);
+                done.resolve();
+            });
         });
         return done.promise;
     }
 }
 exports.SmartAcme = SmartAcme;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic21hcnRhY21lLmNsYXNzZXMuc21hcnRhY21lLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vdHMvc21hcnRhY21lLmNsYXNzZXMuc21hcnRhY21lLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQSwwQkFBdUI7QUFDdkIsdUJBQXNCO0FBTXRCLElBQUksSUFBSSxHQUFHLE9BQU8sQ0FBQyxjQUFjLENBQUMsQ0FBQyxJQUFJLENBQUMsTUFBTSxFQUFFLENBQUE7QUFDaEQsSUFBSSxHQUFHLEdBQUcsT0FBTyxDQUFDLFlBQVksQ0FBQyxDQUFDLEdBQUcsQ0FBQTtBQUVuQyxJQUFJLE1BQU0sR0FBRyxJQUFJLENBQUE7QUFDakIsSUFBSSxHQUFHLEdBQUcsS0FBSyxDQUFBO0FBQ2YsSUFBSSxPQUFPLEdBQUc7SUFDVixNQUFNLEVBQUUsSUFBSTtJQUNaLEdBQUcsRUFBRSxJQUFJO0lBQ1QsUUFBUSxFQUFFLElBQUk7Q0FDakIsQ0FBQTtBQUNEOztHQUVHO0FBQ0g7SUFLSSxZQUFZLGdCQUF5QixLQUFLO1FBSjFDLGlCQUFZLEdBQVksS0FBSyxDQUFBO1FBS3pCLElBQUksQ0FBQyxjQUFjLEdBQUcsYUFBYSxDQUFBO0lBQ3ZDLENBQUM7SUFFRDs7T0FFRztJQUNILFdBQVc7UUFDUCxJQUFJLElBQUksR0FBRyxDQUFDLENBQUMsS0FBSyxFQUFFLENBQUE7UUFDcEIsRUFBRSxDQUFDLENBQUMsSUFBSSxDQUFDLFlBQVksS0FBSyxLQUFLLENBQUMsQ0FBQyxDQUFDO1lBQzlCLElBQUksQ0FBQyxXQUFXLEVBQUU7aUJBQ2IsSUFBSSxDQUFDO2dCQUNGLE1BQU0sQ0FBQyxJQUFJLENBQUMsYUFBYSxFQUFFLENBQUE7WUFDL0IsQ0FBQyxDQUFDO2lCQUNELElBQUksQ0FBQyxDQUFDLENBQUM7Z0JBQ0osT0FBTyxDQUFDLEdBQUcsQ0FBQyw2QkFBNkIsQ0FBQyxDQUFBO2dCQUMxQyxJQUFJLENBQUMsT0FBTyxFQUFFLENBQUE7WUFDbEIsQ0FBQyxD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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic21hcnRhY21lLmNsYXNzZXMuc21hcnRhY21lLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vdHMvc21hcnRhY21lLmNsYXNzZXMuc21hcnRhY21lLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQSwwQkFBdUI7QUFDdkIsdUJBQXNCO0FBRXRCLElBQUksU0FBUyxHQUFHLE9BQU8sQ0FBQyxZQUFZLENBQUMsQ0FBQTtBQUdyQyxJQUFJLE9BQU8sR0FBRyxPQUFPLENBQUMsU0FBUyxDQUFDLENBQUE7QUFHaEMseUVBQXlFO0FBRXpFOztHQUVHO0FBQ0g7SUFPSTs7T0FFRztJQUNILFlBQVksZ0JBQXlCLEtBQUs7UUFDdEMsSUFBSSxDQUFDLGNBQWMsR0FBRyxhQUFhLENBQUE7UUFDbkMsSUFBSSxDQUFDLE1BQU0sR0FBRyxJQUFJLDBDQUFlLEVBQUUsQ0FBQTtRQUNuQyxJQUFJLENBQUMsT0FBTyxHQUFHLElBQUksQ0FBQyxNQUFNLENBQUMsYUFBYSxFQUFFLENBQUE7UUFDMUMsRUFBRSxDQUFDLENBQUMsSUFBSSxDQUFDLGNBQWMsQ0FBQyxDQUFDLENBQUM7WUFDdEIsSUFBSSxDQUFDLE9BQU8sR0FBRyxPQUFPLENBQUMsdUJBQXVCLENBQUE7UUFDbEQsQ0FBQztRQUFDLElBQUksQ0FBQyxDQUFDO1lBQ0osSUFBSSxDQUFDLE9BQU8sR0FBRyxPQUFPLENBQUMsZUFBZSxDQUFBO1FBQzFDLENBQUM7SUFDTCxDQUFDO0lBRUQ7OztPQUdHO0lBQ0gsYUFBYTtRQUNULElBQUksSUFBSSxHQUFHLENBQUMsQ0FBQyxLQUFLLEVBQUUsQ0FBQTtRQUNwQixPQUFPLENBQUMsWUFBWSxDQUNoQjtZQUNJLEdBQUcsRUFBRSxJQUFJLENBQUMsT0FBTztZQUNqQixTQUFTLEVBQUUsSUFBSSxDQUFDLE9BQU8sQ0FBQyxTQUFTO1lBQ2pDLFVBQVUsRUFBRSxJQUFJLENBQUMsT0FBTyxDQUFDLFVBQVU7U0FDdEMsRUFDRCxDQUFDLEdBQUcsRUFBRSxNQUFNO1lBQ1IsRUFBRSxDQUFDLENBQUMsR0FBRyxDQUFDLENBQUMsQ0FBQztnQkFDTixPQUFPLENBQUMsS0FBSyxDQUFDLGtDQUFrQyxDQUFDLENBQUE7Z0JBQ2pELE9BQU8sQ0FBQyxHQUFHLENBQUMsR0FBRyxDQUFDLENBQUE7Z0JBQ2hCLElBQUksQ0FBQyxNQUFNLENBQUMsR0FBRyxDQUFDLENBQUE7Z0JBQ2hCLE1BQU0sQ0FBQTtZQUNWLENBQUM7WUFFRCxNQUFNLENBQUMsTUFBTSxDQUNUO2dCQUNJLE9BQU8sRUFBRSxDQUFDLDZCQUE2QixDQUFDO2FBQzNDLEVBQ0QsQ0FBQyxHQUFHLEVBQUUsR0FBRztnQkFDTCxFQUFFLENBQUMsQ0FBQyxHQUFHLENBQUMsQ0FBQyxDQUFDO29CQUNOLE9BQU8sQ0FBQyxLQUFLLENBQUMsa0NBQWtDLENBQUMsQ0FBQTtvQkFDakQsT0FBTyxDQUFDLEdBQUcsQ0FBQyxHQUFHLENBQUMsQ0FBQTtvQkFDaEIsSUFBSSxDQUFDLE1BQU0sQ0FBQyxHQUFHLENBQUMsQ0FBQTtvQkFDaEIsTUFBTSxDQUFBO2dCQUNWLENBQUM7Z0JBQ0QsSUFBSSxDQUFDLEdBQUcsR0FBRyxHQUFHLENBQUMsSUFBSSxDQUFDLEdBQUcsQ0FBQTtnQkFDdkIsT0FBTyxDQUFDLEdBQUcsQ0FBQyxJQUFJLENBQUMsR0FBRyxDQUFDLENBQUE7Z0JBQ3JCLElBQUksQ0FBQyxPQUFPLEVBQUUsQ0FBQTtZQUNsQixDQUFDLENBQUMsQ0FBQTtRQUVWLENBQUMsQ0FDSixDQUFBO1FBQ0QsTUFBTSxDQUFDLElBQUksQ0FBQyxPQUFPLENBQUE7SUFDdkIsQ0FBQztDQUNKO0FBN0RELDhCQTZEQyJ9

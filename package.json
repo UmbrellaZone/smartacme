@@ -24,9 +24,9 @@
   "homepage": "https://gitlab.com/pushrocks/smartacme#README",
   "dependencies": {
     "@types/q": "0.x.x",
-    "le-acme-core": "^2.0.7",
     "q": "^1.4.1",
-    "rsa-compat": "^1.2.7",
+    "rawacme": "^0.2.1",
+    "rsa-keygen": "^1.0.6",
     "smartfile": "^4.1.0",
     "smartstring": "^2.0.20",
     "typings-global": "^1.0.14"
