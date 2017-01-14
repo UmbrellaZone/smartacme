@@ -1,22 +1,32 @@
-import 'typings-global'
-import * as q from 'q'
-import * as path from 'path'
-let rsaKeygen = require('rsa-keygen')
-import * as smartfile from 'smartfile'
-import * as smartstring from 'smartstring'
-let rawacme = require('rawacme')
-import * as paths from './smartacme.paths'
+// third party modules
+import * as q from 'q' // promises
+import * as plugins from './smartacme.plugins'
+import * as helpers from './smartacme.helpers'
 
-import { SmartacmeHelper, IRsaKeypair } from './smartacme.classes.helper'
+export interface IRsaKeypair {
+    publicKey: string
+    privateKey: string
+}
 
-export type TChallenge = 'dns-01' | 'http-01'
+export type TChallengeType = 'dns-01' | 'http-01'
+export type TChallengeStatus = 'pending'
 
+export interface ISmartAcmeChallenge {
+    uri: string
+    status: TChallengeStatus
+    type: TChallengeType
+    token: string
+    keyAuthorization: string
+}
+
+export interface ISmartAcmeChallengeAccepted extends ISmartAcmeChallenge {
+    keyHash: string
+}
 
 /**
  * class SmartAcme exports methods for maintaining SSL Certificates
  */
 export class SmartAcme {
-    helper: SmartacmeHelper // bundles helper methods that would clutter the main SmartAcme class
     acmeUrl: string // the acme url to use
     productionBool: boolean // a boolean to quickly know wether we are in production or not
     keyPair: IRsaKeypair // the keyPair needed for account creation
@@ -30,12 +40,11 @@ export class SmartAcme {
      */
     constructor(productionArg: boolean = false) {
         this.productionBool = productionArg
-        this.helper = new SmartacmeHelper(this)
-        this.keyPair = this.helper.createKeypair()
+        this.keyPair = helpers.createKeypair()
         if (this.productionBool) {
-            this.acmeUrl = rawacme.LETSENCRYPT_URL
+            this.acmeUrl = plugins.rawacme.LETSENCRYPT_URL
         } else {
-            this.acmeUrl = rawacme.LETSENCRYPT_STAGING_URL
+            this.acmeUrl = plugins.rawacme.LETSENCRYPT_STAGING_URL
         }
     }
 
@@ -45,7 +54,7 @@ export class SmartAcme {
      */
     createAccount() {
         let done = q.defer()
-        rawacme.createClient(
+        plugins.rawacme.createClient(
             {
                 url: this.acmeUrl,
                 publicKey: this.keyPair.publicKey,
@@ -107,8 +116,8 @@ export class SmartAcme {
      * @param domainNameArg - the domain name to request a challenge for
      * @param challengeType - the challenge type to request
      */
-    requestChallenge(domainNameArg: string, challengeTypeArg: TChallenge = 'dns-01') {
-        let done = q.defer()
+    requestChallenge(domainNameArg: string, challengeTypeArg: TChallengeType = 'dns-01') {
+        let done = q.defer<ISmartAcmeChallengeAccepted>()
         this.rawacmeClient.newAuthz(
             {
                 identifier: {
@@ -128,7 +137,7 @@ export class SmartAcme {
                     return x.type === challengeTypeArg
                 })[0]
                 this.acceptChallenge(dnsChallenge)
-                    .then(x => {
+                    .then((x: ISmartAcmeChallengeAccepted) => {
                         done.resolve(x)
                     })
             }
@@ -144,15 +153,50 @@ export class SmartAcme {
     }
 
     /**
+     * validates a challenge
+     */
+    validate(challenge: ISmartAcmeChallengeAccepted) {
+        let done = q.defer()
+        this.rawacmeClient.poll(challenge.uri, function(err, res) {
+            if (err) {
+                console.log(err)
+                done.reject(err)
+            }
+            console.log(res.status)
+            console.log(JSON.stringify(res.body))
+            done.resolve()
+        })
+        return done.promise
+    }
+
+
+    /**
      * accept a challenge - for private use only
      */
-    private acceptChallenge(challenge) {
+    private acceptChallenge(challenge: ISmartAcmeChallenge) {
         let done = q.defer()
 
-        let authKey: string = rawacme.keyAuthz(challenge.token, this.keyPair.publicKey)
-        let dnsKeyHash: string = rawacme.dnsKeyAuthzHash(authKey) // needed if dns challenge is chosen
+        /**
+         * the key is needed to accept the challenge
+         */
+        let authKey: string = plugins.rawacme.keyAuthz(challenge.token, this.keyPair.publicKey)
 
-        console.log(authKey)
+        /**
+         * needed in case selected challenge is of type dns-01
+         */
+        let keyHash: string = plugins.rawacme.dnsKeyAuthzHash(authKey) // needed if dns challenge is chosen
+
+        /**
+         * the return challenge
+         */
+        let returnDNSChallenge: ISmartAcmeChallengeAccepted = {
+            uri: challenge.uri,
+            type: challenge.type,
+            token: challenge.token,
+            keyAuthorization: challenge.keyAuthorization,
+            keyHash: keyHash,
+            status: challenge.status
+        }
 
         this.rawacmeClient.post(
             challenge.uri,
@@ -166,9 +210,7 @@ export class SmartAcme {
                     console.log(err)
                     done.reject(err)
                 }
-                console.log('acceptChallenge:')
-                console.log(JSON.stringify(res.body))
-                done.resolve(dnsKeyHash)
+                done.resolve(returnDNSChallenge)
             }
         )
         return done.promise

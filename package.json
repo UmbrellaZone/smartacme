@@ -23,7 +23,9 @@
   },
   "homepage": "https://gitlab.com/pushrocks/smartacme#README",
   "dependencies": {
+    "@types/node-forge": "^0.6.5",
     "@types/q": "0.x.x",
+    "node-forge": "^0.6.46",
     "q": "^1.4.1",
     "rawacme": "^0.2.1",
     "rsa-keygen": "^1.0.6",

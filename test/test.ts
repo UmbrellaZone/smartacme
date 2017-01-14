@@ -6,13 +6,13 @@ import * as smartacme from '../dist/index'
 
 describe('smartacme', function () {
     let testAcme: smartacme.SmartAcme
-    
+    let testChallenge: smartacme.ISmartAcmeChallengeAccepted
     it('should create a valid instance', function () {
         this.timeout(10000)
         testAcme = new smartacme.SmartAcme()
         should(testAcme).be.instanceOf(smartacme.SmartAcme)
     })
-    
+
     it('should have created keyPair', function () {
         should(testAcme.acmeUrl).be.of.type('string')
     })
@@ -36,7 +36,16 @@ describe('smartacme', function () {
 
     it('should request a challenge for a domain', function(done) {
         this.timeout(10000)
-        testAcme.requestChallenge('bleu.de').then(() => {
+        testAcme.requestChallenge('bleu.de').then((challengeAccepted) => {
+            console.log(challengeAccepted)
+            testChallenge = challengeAccepted
+            done()
+        })
+    })
+
+    it('should poll for validation of a challenge',function(done) {
+        this.timeout(10000)
+        testAcme.validate(testChallenge).then(x => {
             done()
         })
     })

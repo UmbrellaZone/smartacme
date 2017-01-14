@@ -14,7 +14,7 @@ export declare class SmartacmeHelper {
      */
     createKeypair(bit?: number): IRsaKeypair;
     /**
-     * getReg
+     * gets an existing registration
      * @executes ASYNC
      */
     getReg(): q.Promise<{}>;

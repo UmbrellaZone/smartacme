@@ -17,7 +17,7 @@ class SmartacmeHelper {
         };
     }
     /**
-     * getReg
+     * gets an existing registration
      * @executes ASYNC
      */
     getReg() {
