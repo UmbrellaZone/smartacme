@@ -4,8 +4,7 @@ import * as q from 'q'
 import * as plugins from './smartacme.plugins'
 
 import { SmartAcme, IRsaKeypair } from './smartacme.classes.smartacme'
-
-
+import { AcmeAccount } from './smartacme.classes.acmeaccount'
 
 /**
  * creates a keypair to use with requests and to generate JWK from
@@ -22,12 +21,13 @@ export let createKeypair = (bit = 2048): IRsaKeypair => {
  * gets an existing registration
  * @executes ASYNC
  */
-let getReg = (smartAcmeArg: SmartAcme) => {
+let getReg = (SmartAcmeArg: SmartAcme, location: string) => {
     let done = q.defer()
     let body = { resource: 'reg' }
-    smartAcmeArg.rawacmeClient.post(
-        smartAcmeArg.location,
-        body, smartAcmeArg.keyPair,
+    SmartAcmeArg.rawacmeClient.post(
+        location,
+        body,
+        SmartAcmeArg.keyPair,
         (err, res) => {
             if (err) {
                 console.error('smartacme: something went wrong:')

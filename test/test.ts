@@ -1,25 +1,30 @@
 import 'typings-test'
 import * as should from 'should'
+import * as cflare from 'cflare'
 
 // import the module to test
 import * as smartacme from '../dist/index'
 
 describe('smartacme', function () {
-    let testAcme: smartacme.SmartAcme
+    let testSmartAcme: smartacme.SmartAcme
+    let testAcmeAccount: smartacme.AcmeAccount
     let testChallenge: smartacme.ISmartAcmeChallengeAccepted
-    it('should create a valid instance', function () {
+    it('should create a valid instance', function (done) {
         this.timeout(10000)
-        testAcme = new smartacme.SmartAcme()
-        should(testAcme).be.instanceOf(smartacme.SmartAcme)
+        testSmartAcme = new smartacme.SmartAcme()
+        testSmartAcme.init().then(() => {
+            should(testSmartAcme).be.instanceOf(smartacme.SmartAcme)
+            done()
+        }).catch(err => { done(err) })
     })
 
     it('should have created keyPair', function () {
-        should(testAcme.acmeUrl).be.of.type('string')
+        should(testSmartAcme.acmeUrl).be.of.type('string')
     })
 
     it('should register a new account', function (done) {
         this.timeout(10000)
-        testAcme.createAccount().then(x => {
+        testSmartAcme.createAccount().then(x => {
             done()
         }).catch(err => {
             console.log(err)
@@ -27,25 +32,18 @@ describe('smartacme', function () {
         })
     })
 
-    it('should agree to ToS', function(done) {
+    it.skip('should request a cert for a domain', function (done) {
         this.timeout(10000)
-        testAcme.agreeTos().then(() => {
-            done()
-        })
-    })
-
-    it('should request a challenge for a domain', function(done) {
-        this.timeout(10000)
-        testAcme.requestChallenge('bleu.de').then((challengeAccepted) => {
+        testAcmeAccount.requestChallenge('bleu.de').then((challengeAccepted) => {
             console.log(challengeAccepted)
             testChallenge = challengeAccepted
             done()
         })
     })
 
-    it('should poll for validation of a challenge',function(done) {
+    it.skip('should poll for validation of a challenge', function (done) {
         this.timeout(10000)
-        testAcme.validate(testChallenge).then(x => {
+        testSmartAcme.validate(testChallenge).then(x => {
             done()
         })
     })
