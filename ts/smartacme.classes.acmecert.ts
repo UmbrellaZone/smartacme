@@ -131,14 +131,22 @@ export class AcmeCert {
     }
 
     /**
-     * checks if DNS records are set
+     * checks if DNS records are set, will go through a max of 30 cycles
      */
-    async checkDns() {
+    async checkDns(cycleArg = 1) {
+        console.log(`checkDns failed ${cycleArg} times and has ${30 - cycleArg} cycles to go before it fails permanently!`)
         let myRecord
         try {
             myRecord = await myDnsly.getRecord(helpers.prefixName(this.domainName), 'TXT')
+            console.log('DNS is set!')
         } catch (err) {
-            await this.checkDns()
+            if (cycleArg < 30) {
+                cycleArg++
+                await this.checkDns(cycleArg)
+            } else {
+                console.log('failed permanently...')
+                throw err
+            }
         }
         return myRecord[0][0]
     }
