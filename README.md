@@ -26,11 +26,25 @@ import { SmartAcme } from 'smartacme'
 
 let smac = new SmartAcme()
 
-let myAccount = smac.getAccount() // optionally accepts a filePath Arg with a stored acmeaccount.json
-let myCert = myAccount.getChallenge('example.com','dns-01') // will return a dnsHash to set in your DNS record
-myCert.get().then(() => {
-    console.log(myCert.certificate) // your certificate, ready to use in whatever way you prefer
-})
+(async () => { // learn async/await, it'll make your life easier
+
+    // optionally accepts a filePath Arg with a stored acmeaccount.json
+    // will create an account and 
+    let myAccount = await smac.createAcmeAccount()
+    
+    // will return a dnsHash to set in your DNS record
+    let myCert = await myAccount.createAcmeCert('example.com')
+
+    // gets and accepts the specified challenge
+    // first argument optional, defaults to dns-01 (which is the cleanest method for production use)
+    let myChallenge = await myCert.getChallenge('dns-01')
+
+    /* ----------
+    Now you need to set the challenge in your DNS
+    myChallenge.domainNamePrefixed is the address for the record
+    myChallenge.dnsKeyHash is the ready to use txt record value expected by letsencrypt
+    -------------*/
+})()
 ```
 
 [![npm](https://push.rocks/assets/repo-header.svg)](https://push.rocks)

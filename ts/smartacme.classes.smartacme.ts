@@ -69,7 +69,7 @@ export class SmartAcme {
      * creates an account if not currently present in module
      * @executes ASYNC
      */
-    createAccount() {
+    createAcmeAccount() {
         let done = q.defer<AcmeAccount>()
         let acmeAccount = new AcmeAccount(this)
         acmeAccount.register().then(() => {

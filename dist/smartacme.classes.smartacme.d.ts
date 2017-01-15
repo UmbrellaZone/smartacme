@@ -30,5 +30,5 @@ export declare class SmartAcme {
      * creates an account if not currently present in module
      * @executes ASYNC
      */
-    createAccount(): q.Promise<AcmeAccount>;
+    createAcmeAccount(): q.Promise<AcmeAccount>;
 }
