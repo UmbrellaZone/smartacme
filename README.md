@@ -47,4 +47,11 @@ let smac = new SmartAcme()
 })()
 ```
 
+## Other relevant npm modules
+module name | description
+--- | ---
+cert | a higlevel production module that uses smartacme to manage certs
+smartnginx | a highlevel production tool for docker environments to manage nginx 
+
+
 [![npm](https://push.rocks/assets/repo-header.svg)](https://push.rocks)
