@@ -10,6 +10,7 @@ describe('smartacme', function () {
     let testAcmeAccount: smartacme.AcmeAccount
     let testAcmeCert: smartacme.AcmeCert
     let testChallenge: smartacme.ISmartAcmeChallengeAccepted
+    
     it('should create a valid instance', function (done) {
         this.timeout(10000)
         testSmartAcme = new smartacme.SmartAcme()
@@ -35,7 +36,7 @@ describe('smartacme', function () {
     })
 
     it('should create a AcmeCert', function() {
-        testAcmeAccount.createAcmeCert('bleu.de').then(x => {
+        testAcmeAccount.createAcmeCert('test1.bleu.de').then(x => {
             testAcmeCert = x
             should(testAcmeAccount).be.instanceOf(smartacme.AcmeCert)
         })
@@ -50,9 +51,9 @@ describe('smartacme', function () {
         })
     })
 
-    it.skip('should poll for validation of a challenge', function (done) {
+    it('should poll for validation of a challenge', function (done) {
         this.timeout(10000)
-        testSmartAcme.validate(testChallenge).then(x => {
+        testAcmeCert.requestValidation().then(x => {
             done()
         })
     })

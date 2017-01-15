@@ -48,6 +48,7 @@ export interface IAcmeCsrConstructorOptions {
 export class AcmeCert {
     domainName: string
     attributes
+    acceptedChallenge: ISmartAcmeChallengeAccepted
     fullchain: string
     parentAcmeAccount: AcmeAccount
     csr
@@ -112,7 +113,6 @@ export class AcmeCert {
                     console.log(err)
                     done.reject(err)
                 }
-                console.log(JSON.stringify(res.body))
                 let dnsChallenge = res.body.challenges.filter(x => {
                     return x.type === challengeTypeArg
                 })[0]
@@ -128,16 +128,25 @@ export class AcmeCert {
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */
-    validate(challenge: ISmartAcmeChallengeAccepted) {
+    requestValidation() {
         let done = q.defer()
-        this.parentAcmeAccount.parentSmartAcme.rawacmeClient.poll(challenge.uri, function (err, res) {
+        this.parentAcmeAccount.parentSmartAcme.rawacmeClient.poll(this.acceptedChallenge.uri, (err, res) => {
             if (err) {
                 console.log(err)
                 done.reject(err)
             }
-            console.log(res.status)
+            console.log(`Validation response:`)
             console.log(JSON.stringify(res.body))
-            done.resolve()
+            if (res.body.status === 'pending' || 'invalid') {
+                setTimeout(
+                    () => {
+                        this.requestValidation().then(x => { done.resolve(x) })
+                    },
+                    2000
+                )
+            } else {
+                done.resolve(res.body)
+            }
         })
         return done.promise
     }
@@ -166,6 +175,8 @@ export class AcmeCert {
                     console.log(err)
                     done.reject(err)
                 }
+                console.log(res.body)
+                done.resolve(res.body)
             })
         return done.promise
     }
@@ -180,14 +191,14 @@ export class AcmeCert {
     /**
      * accept a challenge - for private use only
      */
-    private acceptChallenge(challenge: ISmartAcmeChallenge) {
+    private acceptChallenge(challengeArg: ISmartAcmeChallenge) {
         let done = q.defer()
 
         /**
          * the key is needed to accept the challenge
          */
         let authKey: string = plugins.rawacme.keyAuthz(
-            challenge.token,
+            challengeArg.token,
             this.parentAcmeAccount.parentSmartAcme.keyPair.publicKey
         )
 
@@ -197,7 +208,7 @@ export class AcmeCert {
         let keyHash: string = plugins.rawacme.dnsKeyAuthzHash(authKey) // needed if dns challenge is chosen
 
         this.parentAcmeAccount.parentSmartAcme.rawacmeClient.post(
-            challenge.uri,
+            challengeArg.uri,
             {
                 resource: 'challenge',
                 keyAuthorization: authKey
@@ -219,6 +230,7 @@ export class AcmeCert {
                     keyHash: keyHash,
                     status: res.body.status
                 }
+                this.acceptedChallenge = returnDNSChallenge
                 done.resolve(returnDNSChallenge)
             }
         )

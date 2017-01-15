@@ -39,6 +39,7 @@ export interface IAcmeCsrConstructorOptions {
 export declare class AcmeCert {
     domainName: string;
     attributes: any;
+    acceptedChallenge: ISmartAcmeChallengeAccepted;
     fullchain: string;
     parentAcmeAccount: AcmeAccount;
     csr: any;
@@ -56,7 +57,7 @@ export declare class AcmeCert {
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */
-    validate(challenge: ISmartAcmeChallengeAccepted): q.Promise<{}>;
+    requestValidation(): q.Promise<{}>;
     /**
      * requests a certificate
      */
@@ -68,5 +69,5 @@ export declare class AcmeCert {
     /**
      * accept a challenge - for private use only
      */
-    private acceptChallenge(challenge);
+    private acceptChallenge(challengeArg);
 }
