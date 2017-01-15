@@ -8,6 +8,7 @@ import * as smartacme from '../dist/index'
 describe('smartacme', function () {
     let testSmartAcme: smartacme.SmartAcme
     let testAcmeAccount: smartacme.AcmeAccount
+    let testAcmeCert: smartacme.AcmeCert
     let testChallenge: smartacme.ISmartAcmeChallengeAccepted
     it('should create a valid instance', function (done) {
         this.timeout(10000)
@@ -25,6 +26,7 @@ describe('smartacme', function () {
     it('should register a new account', function (done) {
         this.timeout(10000)
         testSmartAcme.createAccount().then(x => {
+            testAcmeAccount = x
             done()
         }).catch(err => {
             console.log(err)
@@ -32,9 +34,16 @@ describe('smartacme', function () {
         })
     })
 
-    it.skip('should request a cert for a domain', function (done) {
+    it('should create a AcmeCert', function() {
+        testAcmeAccount.createAcmeCert('bleu.de').then(x => {
+            testAcmeCert = x
+            should(testAcmeAccount).be.instanceOf(smartacme.AcmeCert)
+        })
+    })
+
+    it('should get a challenge for a AcmeCert', function (done) {
         this.timeout(10000)
-        testAcmeAccount.requestChallenge('bleu.de').then((challengeAccepted) => {
+        testAcmeCert.requestChallenge().then((challengeAccepted) => {
             console.log(challengeAccepted)
             testChallenge = challengeAccepted
             done()

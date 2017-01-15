@@ -37,6 +37,7 @@ export interface IAcmeCsrConstructorOptions {
  * class AcmeCert represents a cert for domain
  */
 export declare class AcmeCert {
+    domainName: string;
     attributes: any;
     fullchain: string;
     parentAcmeAccount: AcmeAccount;
@@ -45,13 +46,13 @@ export declare class AcmeCert {
     validTo: Date;
     keypair: IRsaKeypair;
     keyPairFinal: IRsaKeypair;
-    constructor(optionsArg: IAcmeCsrConstructorOptions, parentSmartAcmeArg: any);
+    constructor(optionsArg: IAcmeCsrConstructorOptions, parentAcmeAccount: AcmeAccount);
     /**
      * requests a challenge for a domain
      * @param domainNameArg - the domain name to request a challenge for
      * @param challengeType - the challenge type to request
      */
-    requestChallenge(domainNameArg: string, challengeTypeArg?: TChallengeType): q.Promise<ISmartAcmeChallengeAccepted>;
+    requestChallenge(challengeTypeArg?: TChallengeType): q.Promise<ISmartAcmeChallengeAccepted>;
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */

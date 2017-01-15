@@ -62,7 +62,33 @@ export class AcmeAccount {
         return done.promise
     }
 
-    createAcmeCert(domainNameArg: string) {
-        
+    createAcmeCert(
+        domainNameArg: string,
+        countryArg = 'Germany',
+        countryShortArg = 'DE',
+        city = 'Bremen',
+        companyArg = 'Some Company',
+        companyShortArg = 'SC'
+
+    ) {
+        let done = q.defer()
+        let acmeCert = new AcmeCert(
+            {
+                bit: 2064,
+                key: null, // not needed right now
+                domain: domainNameArg,
+                country: countryArg,
+                country_short: countryShortArg,
+                locality: city,
+                organization: companyArg,
+                organization_short: companyShortArg,
+                password: null,
+                unstructured: null,
+                subject_alt_names: null
+            },
+            this
+        )
+        done.resolve(acmeCert)
+        return done.promise
     }
 }

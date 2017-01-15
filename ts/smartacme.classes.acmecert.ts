@@ -46,6 +46,7 @@ export interface IAcmeCsrConstructorOptions {
  * class AcmeCert represents a cert for domain
  */
 export class AcmeCert {
+    domainName: string
     attributes
     fullchain: string
     parentAcmeAccount: AcmeAccount
@@ -54,8 +55,9 @@ export class AcmeCert {
     validTo: Date
     keypair: IRsaKeypair
     keyPairFinal: IRsaKeypair
-    constructor(optionsArg: IAcmeCsrConstructorOptions, parentSmartAcmeArg) {
-        this.parentAcmeAccount = parentSmartAcmeArg
+    constructor(optionsArg: IAcmeCsrConstructorOptions, parentAcmeAccount: AcmeAccount) {
+        this.domainName = optionsArg.domain
+        this.parentAcmeAccount = parentAcmeAccount
         this.keypair = helpers.createKeypair(optionsArg.bit)
         let privateKeyForged = plugins.nodeForge.pki.privateKeyFromPem(this.keypair.privateKey)
         let publicKeyForged = plugins.nodeForge.pki.publicKeyToPem(
@@ -94,13 +96,13 @@ export class AcmeCert {
      * @param domainNameArg - the domain name to request a challenge for
      * @param challengeType - the challenge type to request
      */
-    requestChallenge(domainNameArg: string, challengeTypeArg: TChallengeType = 'dns-01') {
+    requestChallenge(challengeTypeArg: TChallengeType = 'dns-01') {
         let done = q.defer<ISmartAcmeChallengeAccepted>()
         this.parentAcmeAccount.parentSmartAcme.rawacmeClient.newAuthz(
             {
                 identifier: {
                     type: 'dns',
-                    value: domainNameArg
+                    value: this.domainName
                 }
             },
             this.parentAcmeAccount.parentSmartAcme.keyPair,
@@ -194,18 +196,6 @@ export class AcmeCert {
          */
         let keyHash: string = plugins.rawacme.dnsKeyAuthzHash(authKey) // needed if dns challenge is chosen
 
-        /**
-         * the return challenge
-         */
-        let returnDNSChallenge: ISmartAcmeChallengeAccepted = {
-            uri: challenge.uri,
-            type: challenge.type,
-            token: challenge.token,
-            keyAuthorization: challenge.keyAuthorization,
-            keyHash: keyHash,
-            status: challenge.status
-        }
-
         this.parentAcmeAccount.parentSmartAcme.rawacmeClient.post(
             challenge.uri,
             {
@@ -217,6 +207,17 @@ export class AcmeCert {
                 if (err) {
                     console.log(err)
                     done.reject(err)
+                }
+                /**
+                 * the return challenge
+                 */
+                let returnDNSChallenge: ISmartAcmeChallengeAccepted = {
+                    uri: res.body.uri,
+                    type: res.body.type,
+                    token: res.body.token,
+                    keyAuthorization: res.body.keyAuthorization,
+                    keyHash: keyHash,
+                    status: res.body.status
                 }
                 done.resolve(returnDNSChallenge)
             }

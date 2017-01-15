@@ -18,5 +18,5 @@ export declare class AcmeAccount {
      * agree to letsencrypr terms of service
      */
     agreeTos(): q.Promise<{}>;
-    createAcmeCert(domainNameArg: string): void;
+    createAcmeCert(domainNameArg: string, countryArg?: string, countryShortArg?: string, city?: string, companyArg?: string, companyShortArg?: string): q.Promise<{}>;
 }
