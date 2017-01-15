@@ -6,15 +6,15 @@ let rawacme = require('rawacme') // acme helper functions
 let nodeForge = require('node-forge')
 
 // push.rocks modules here
+import * as dnsly from 'dnsly'
 import * as smartfile from 'smartfile'
 import * as smartstring from 'smartstring'
-import * as paths from './smartacme.paths'
 
 export {
+    dnsly,
     rsaKeygen,
     rawacme,
     nodeForge,
     smartfile,
-    smartstring,
-    paths
+    smartstring
 }

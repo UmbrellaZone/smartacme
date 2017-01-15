@@ -25,7 +25,9 @@ export interface ISmartAcmeChallenge {
 }
 
 export interface ISmartAcmeChallengeAccepted extends ISmartAcmeChallenge {
-    keyHash: string
+    dnsKeyHash: string
+    domainName: string
+    domainNamePrefixed: string
 }
 
 export interface IAcmeCsrConstructorOptions {
@@ -41,6 +43,9 @@ export interface IAcmeCsrConstructorOptions {
     unstructured: string,
     subject_alt_names: string[]
 }
+
+// Dnsly instance (we really just need one)
+let myDnsly = new plugins.dnsly.Dnsly('google')
 
 /**
  * class AcmeCert represents a cert for domain
@@ -123,6 +128,19 @@ export class AcmeCert {
             }
         )
         return done.promise
+    }
+
+    /**
+     * checks if DNS records are set
+     */
+    async checkDns() {
+        let myRecord
+        try {
+            myRecord = await myDnsly.getRecord(helpers.prefixName(this.domainName), 'TXT')
+        } catch (err) {
+            await this.checkDns()
+        }
+        return myRecord[0][0]
     }
 
     /**
@@ -227,8 +245,10 @@ export class AcmeCert {
                     type: res.body.type,
                     token: res.body.token,
                     keyAuthorization: res.body.keyAuthorization,
-                    keyHash: keyHash,
-                    status: res.body.status
+                    status: res.body.status,
+                    dnsKeyHash: keyHash,
+                    domainName: this.domainName,
+                    domainNamePrefixed: helpers.prefixName(this.domainName)
                 }
                 this.acceptedChallenge = returnDNSChallenge
                 done.resolve(returnDNSChallenge)

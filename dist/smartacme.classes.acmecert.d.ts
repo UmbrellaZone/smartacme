@@ -18,7 +18,9 @@ export interface ISmartAcmeChallenge {
     keyAuthorization: string;
 }
 export interface ISmartAcmeChallengeAccepted extends ISmartAcmeChallenge {
-    keyHash: string;
+    dnsKeyHash: string;
+    domainName: string;
+    domainNamePrefixed: string;
 }
 export interface IAcmeCsrConstructorOptions {
     bit: number;
@@ -54,6 +56,10 @@ export declare class AcmeCert {
      * @param challengeType - the challenge type to request
      */
     requestChallenge(challengeTypeArg?: TChallengeType): q.Promise<ISmartAcmeChallengeAccepted>;
+    /**
+     * checks if DNS records are set
+     */
+    checkDns(): Promise<any>;
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */

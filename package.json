@@ -25,18 +25,20 @@
   "dependencies": {
     "@types/node-forge": "^0.6.5",
     "@types/q": "0.x.x",
-    "node-forge": "^0.6.46",
+    "dnsly": "^1.0.7",
+    "node-forge": "^0.6.47",
     "q": "^1.4.1",
     "rawacme": "^0.2.1",
     "rsa-keygen": "^1.0.6",
-    "smartfile": "^4.1.0",
-    "smartstring": "^2.0.20",
+    "smartfile": "^4.1.2",
+    "smartstring": "^2.0.22",
     "typings-global": "^1.0.14"
   },
   "devDependencies": {
     "@types/should": "^8.1.30",
     "cflare": "0.0.10",
-    "should": "^11.1.1",
+    "qenv": "^1.1.1",
+    "should": "^11.1.2",
     "typings-test": "^1.0.3"
   }
 }

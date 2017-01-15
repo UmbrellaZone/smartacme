@@ -71,7 +71,7 @@ export class AcmeAccount {
         companyShortArg = 'SC'
 
     ) {
-        let done = q.defer()
+        let done = q.defer<AcmeCert>()
         let acmeCert = new AcmeCert(
             {
                 bit: 2064,

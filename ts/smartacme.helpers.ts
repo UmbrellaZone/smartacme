@@ -18,6 +18,13 @@ export let createKeypair = (bit = 2048): IRsaKeypair => {
 }
 
 /**
+ * prefix a domain name to make sure it complies with letsencrypt
+ */
+export let prefixName = (domainNameArg: string): string => {
+    return '_acme-challenge.' + domainNameArg
+}
+
+/**
  * gets an existing registration
  * @executes ASYNC
  */

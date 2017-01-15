@@ -1,6 +1,7 @@
 import 'typings-test'
 import * as should from 'should'
 import * as cflare from 'cflare'
+import * as qenv from 'qenv'
 
 // import the module to test
 import * as smartacme from '../dist/index'
@@ -51,7 +52,14 @@ describe('smartacme', function () {
         })
     })
 
-    it('should poll for validation of a challenge', function (done) {
+    it('should check for a DNS record', function(done) {
+        testAcmeCert.checkDns().then(x => {
+            console.log(x)
+            done()
+        })
+    })
+
+    it.skip('should poll for validation of a challenge', function (done) {
         this.timeout(10000)
         testAcmeCert.requestValidation().then(x => {
             done()
