@@ -139,42 +139,45 @@ export class AcmeCert {
         try {
             myRecord = await myDnsly.getRecord(helpers.prefixName(this.domainName), 'TXT')
             console.log('DNS is set!')
+            return myRecord[0][0]
         } catch (err) {
             if (cycleArg < 30) {
                 cycleArg++
-                await this.checkDns(cycleArg)
+                await plugins.smartdelay.delayFor(2000)
+                return await this.checkDns(cycleArg)
             } else {
                 console.log('failed permanently...')
                 throw err
             }
         }
-        return myRecord[0][0]
     }
 
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */
-    requestValidation() {
-        let done = q.defer()
-        this.parentAcmeAccount.parentSmartAcme.rawacmeClient.poll(this.acceptedChallenge.uri, (err, res) => {
-            if (err) {
-                console.log(err)
-                done.reject(err)
-            }
-            console.log(`Validation response:`)
-            console.log(JSON.stringify(res.body))
-            if (res.body.status === 'pending' || 'invalid') {
-                setTimeout(
-                    () => {
-                        this.requestValidation().then(x => { done.resolve(x) })
-                    },
-                    2000
-                )
-            } else {
-                done.resolve(res.body)
-            }
-        })
-        return done.promise
+    async requestValidation() {
+        console.log('give it 2 minutes to settle!')
+        await plugins.smartdelay.delayFor(120000)
+        let makeRequest = () => {
+            let done = q.defer()
+            this.parentAcmeAccount.parentSmartAcme.rawacmeClient.poll(this.acceptedChallenge.uri, async (err, res) => {
+                if (err) {
+                    console.log(err)
+                    return
+                }
+                console.log(`Validation response:`)
+                console.log(JSON.stringify(res.body))
+                if (res.body.status === 'pending' || 'invalid') {
+                    console.log('retry in 4 minutes!')
+                    await plugins.smartdelay.delayFor(240000)
+                    makeRequest().then((x: any) => { done.resolve(x) })
+                } else {
+                    done.resolve(res.body)
+                }
+            })
+            return done.promise
+        }
+        await makeRequest()
     }
 
     /**

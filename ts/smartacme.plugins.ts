@@ -7,6 +7,7 @@ let nodeForge = require('node-forge')
 
 // push.rocks modules here
 import * as dnsly from 'dnsly'
+import * as smartdelay from 'smartdelay'
 import * as smartfile from 'smartfile'
 import * as smartstring from 'smartstring'
 
@@ -15,6 +16,7 @@ export {
     rsaKeygen,
     rawacme,
     nodeForge,
+    smartdelay,
     smartfile,
     smartstring
 }

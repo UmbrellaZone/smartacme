@@ -59,11 +59,11 @@ export declare class AcmeCert {
     /**
      * checks if DNS records are set, will go through a max of 30 cycles
      */
-    checkDns(cycleArg?: number): Promise<any>;
+    checkDns(cycleArg?: number): any;
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */
-    requestValidation(): q.Promise<{}>;
+    requestValidation(): Promise<void>;
     /**
      * requests a certificate
      */

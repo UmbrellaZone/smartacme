@@ -3,8 +3,16 @@ import * as should from 'should'
 import * as cflare from 'cflare'
 import * as qenv from 'qenv'
 
+let testQenv = new qenv.Qenv(process.cwd(), process.cwd() + '/.nogit')
+
 // import the module to test
 import * as smartacme from '../dist/index'
+
+let myCflareAccount = new cflare.CflareAccount()
+myCflareAccount.auth({
+    email: process.env.CF_EMAIL,
+    key: process.env.CF_KEY
+})
 
 describe('smartacme', function () {
     let testSmartAcme: smartacme.SmartAcme
@@ -52,16 +60,28 @@ describe('smartacme', function () {
         })
     })
 
-    it.skip('should check for a DNS record', function(done) {
+    it('should set the challenge', function(done) {
+        this.timeout(30000)
+        myCflareAccount.createRecord(
+            testChallenge.domainNamePrefixed,
+            'TXT', testChallenge.dnsKeyHash
+        ).then(() => {
+            done()
+        })
+    })
+
+    it('should check for a DNS record', function(done) {
+        this.timeout(40000)
         testAcmeCert.checkDns().then(x => {
             console.log(x)
             done()
         })
     })
 
-    it.skip('should poll for validation of a challenge', function (done) {
-        this.timeout(10000)
+    it('should poll for validation of a challenge', function (done) {
+        this.timeout(700000)
         testAcmeCert.requestValidation().then(x => {
+            console.log(x)
             done()
         })
     })
