@@ -17,7 +17,7 @@ export interface ISmartAcmeChallenge {
     token: string;
     keyAuthorization: string;
 }
-export interface ISmartAcmeChallengeAccepted extends ISmartAcmeChallenge {
+export interface ISmartAcmeChallengeChosen extends ISmartAcmeChallenge {
     dnsKeyHash: string;
     domainName: string;
     domainNamePrefixed: string;
@@ -41,7 +41,6 @@ export interface IAcmeCsrConstructorOptions {
 export declare class AcmeCert {
     domainName: string;
     attributes: any;
-    acceptedChallenge: ISmartAcmeChallengeAccepted;
     fullchain: string;
     parentAcmeAccount: AcmeAccount;
     csr: any;
@@ -49,13 +48,15 @@ export declare class AcmeCert {
     validTo: Date;
     keypair: IRsaKeypair;
     keyPairFinal: IRsaKeypair;
+    chosenChallenge: ISmartAcmeChallengeChosen;
+    dnsKeyHash: string;
     constructor(optionsArg: IAcmeCsrConstructorOptions, parentAcmeAccount: AcmeAccount);
     /**
      * requests a challenge for a domain
      * @param domainNameArg - the domain name to request a challenge for
      * @param challengeType - the challenge type to request
      */
-    requestChallenge(challengeTypeArg?: TChallengeType): q.Promise<ISmartAcmeChallengeAccepted>;
+    requestChallenge(challengeTypeArg?: TChallengeType): q.Promise<ISmartAcmeChallengeChosen>;
     /**
      * checks if DNS records are set, will go through a max of 30 cycles
      */
@@ -75,5 +76,5 @@ export declare class AcmeCert {
     /**
      * accept a challenge - for private use only
      */
-    private acceptChallenge(challengeArg);
+    acceptChallenge(): q.Promise<{}>;
 }

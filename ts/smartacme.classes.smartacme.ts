@@ -14,7 +14,7 @@ export interface IRsaKeypair {
 }
 
 export { AcmeAccount } from './smartacme.classes.acmeaccount'
-export { AcmeCert, ISmartAcmeChallenge, ISmartAcmeChallengeAccepted } from './smartacme.classes.acmecert'
+export { AcmeCert, ISmartAcmeChallenge, ISmartAcmeChallengeChosen } from './smartacme.classes.acmecert'
 
 /**
  * class SmartAcme exports methods for maintaining SSL Certificates

@@ -24,7 +24,7 @@ export interface ISmartAcmeChallenge {
     keyAuthorization: string
 }
 
-export interface ISmartAcmeChallengeAccepted extends ISmartAcmeChallenge {
+export interface ISmartAcmeChallengeChosen extends ISmartAcmeChallenge {
     dnsKeyHash: string
     domainName: string
     domainNamePrefixed: string
@@ -53,7 +53,6 @@ let myDnsly = new plugins.dnsly.Dnsly('google')
 export class AcmeCert {
     domainName: string
     attributes
-    acceptedChallenge: ISmartAcmeChallengeAccepted
     fullchain: string
     parentAcmeAccount: AcmeAccount
     csr
@@ -61,6 +60,8 @@ export class AcmeCert {
     validTo: Date
     keypair: IRsaKeypair
     keyPairFinal: IRsaKeypair
+    chosenChallenge: ISmartAcmeChallengeChosen
+    dnsKeyHash: string
     constructor(optionsArg: IAcmeCsrConstructorOptions, parentAcmeAccount: AcmeAccount) {
         this.domainName = optionsArg.domain
         this.parentAcmeAccount = parentAcmeAccount
@@ -103,7 +104,7 @@ export class AcmeCert {
      * @param challengeType - the challenge type to request
      */
     requestChallenge(challengeTypeArg: TChallengeType = 'dns-01') {
-        let done = q.defer<ISmartAcmeChallengeAccepted>()
+        let done = q.defer<ISmartAcmeChallengeChosen>()
         this.parentAcmeAccount.parentSmartAcme.rawacmeClient.newAuthz(
             {
                 identifier: {
@@ -118,13 +119,36 @@ export class AcmeCert {
                     console.log(err)
                     done.reject(err)
                 }
-                let dnsChallenge = res.body.challenges.filter(x => {
+                let preChosenChallenge = res.body.challenges.filter(x => {
                     return x.type === challengeTypeArg
                 })[0]
-                this.acceptChallenge(dnsChallenge)
-                    .then((x: ISmartAcmeChallengeAccepted) => {
-                        done.resolve(x)
-                    })
+
+                /**
+                 * the key is needed to accept the challenge
+                 */
+                let authKey: string = plugins.rawacme.keyAuthz(
+                    preChosenChallenge.token,
+                    this.parentAcmeAccount.parentSmartAcme.keyPair.publicKey
+                )
+
+                /**
+                 * needed in case selected challenge is of type dns-01
+                 */
+                this.dnsKeyHash = plugins.rawacme.dnsKeyAuthzHash(authKey) // needed if dns challenge is chosen
+                /**
+                 * the return challenge
+                 */
+                this.chosenChallenge = {
+                    uri: preChosenChallenge.uri,
+                    type: preChosenChallenge.type,
+                    token: preChosenChallenge.token,
+                    keyAuthorization: authKey,
+                    status: preChosenChallenge.status,
+                    dnsKeyHash: this.dnsKeyHash,
+                    domainName: this.domainName,
+                    domainNamePrefixed: helpers.prefixName(this.domainName)
+                }
+                done.resolve(this.chosenChallenge)
             }
         )
         return done.promise
@@ -134,13 +158,7 @@ export class AcmeCert {
      * checks if DNS records are set, will go through a max of 30 cycles
      */
     async checkDns(cycleArg = 1) {
-        console.log(`checkDns failed ${cycleArg} times and has ${30 - cycleArg} cycles to go before it fails permanently!`)
-        let myRecord
-        try {
-            myRecord = await myDnsly.getRecord(helpers.prefixName(this.domainName), 'TXT')
-            console.log('DNS is set!')
-            return myRecord[0][0]
-        } catch (err) {
+        let redoCheck = async (err?) => {
             if (cycleArg < 30) {
                 cycleArg++
                 await plugins.smartdelay.delayFor(2000)
@@ -150,17 +168,32 @@ export class AcmeCert {
                 throw err
             }
         }
+        console.log(`checkDns failed ${cycleArg} times and has ${30 - cycleArg} cycles to go before it fails permanently!`)
+        let myRecord
+        try {
+            myRecord = await myDnsly.getRecord(helpers.prefixName(this.domainName), 'TXT')
+            myRecord = myRecord[0][0]
+            if (myRecord === this.dnsKeyHash) {
+                console.log('and matches the required dnsKeyHash')
+            } else {
+                console.log('but does not match required dns keyHash!')
+                return redoCheck()
+            }
+            console.log('DNS is set!')
+            return myRecord
+        } catch (err) {
+            return redoCheck()
+        }
     }
 
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */
     async requestValidation() {
-        console.log('give it 2 minutes to settle!')
-        await plugins.smartdelay.delayFor(120000)
+        await plugins.smartdelay.delayFor(20000)
         let makeRequest = () => {
             let done = q.defer()
-            this.parentAcmeAccount.parentSmartAcme.rawacmeClient.poll(this.acceptedChallenge.uri, async (err, res) => {
+            this.parentAcmeAccount.parentSmartAcme.rawacmeClient.poll(this.chosenChallenge.uri, async (err, res) => {
                 if (err) {
                     console.log(err)
                     return
@@ -168,8 +201,8 @@ export class AcmeCert {
                 console.log(`Validation response:`)
                 console.log(JSON.stringify(res.body))
                 if (res.body.status === 'pending' || 'invalid') {
-                    console.log('retry in 4 minutes!')
-                    await plugins.smartdelay.delayFor(240000)
+                    console.log('retry in 6 minutes!')
+                    await plugins.smartdelay.delayFor(3000)
                     makeRequest().then((x: any) => { done.resolve(x) })
                 } else {
                     done.resolve(res.body)
@@ -220,27 +253,13 @@ export class AcmeCert {
     /**
      * accept a challenge - for private use only
      */
-    private acceptChallenge(challengeArg: ISmartAcmeChallenge) {
+    acceptChallenge() {
         let done = q.defer()
-
-        /**
-         * the key is needed to accept the challenge
-         */
-        let authKey: string = plugins.rawacme.keyAuthz(
-            challengeArg.token,
-            this.parentAcmeAccount.parentSmartAcme.keyPair.publicKey
-        )
-
-        /**
-         * needed in case selected challenge is of type dns-01
-         */
-        let keyHash: string = plugins.rawacme.dnsKeyAuthzHash(authKey) // needed if dns challenge is chosen
-
         this.parentAcmeAccount.parentSmartAcme.rawacmeClient.post(
-            challengeArg.uri,
+            this.chosenChallenge.uri,
             {
                 resource: 'challenge',
-                keyAuthorization: authKey
+                keyAuthorization: this.chosenChallenge.keyAuthorization
             },
             this.parentAcmeAccount.parentSmartAcme.keyPair,
             (err, res) => {
@@ -248,21 +267,7 @@ export class AcmeCert {
                     console.log(err)
                     done.reject(err)
                 }
-                /**
-                 * the return challenge
-                 */
-                let returnDNSChallenge: ISmartAcmeChallengeAccepted = {
-                    uri: res.body.uri,
-                    type: res.body.type,
-                    token: res.body.token,
-                    keyAuthorization: res.body.keyAuthorization,
-                    status: res.body.status,
-                    dnsKeyHash: keyHash,
-                    domainName: this.domainName,
-                    domainNamePrefixed: helpers.prefixName(this.domainName)
-                }
-                this.acceptedChallenge = returnDNSChallenge
-                done.resolve(returnDNSChallenge)
+                done.resolve(res.body)
             }
         )
         return done.promise

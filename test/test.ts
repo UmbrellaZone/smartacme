@@ -18,11 +18,11 @@ describe('smartacme', function () {
     let testSmartAcme: smartacme.SmartAcme
     let testAcmeAccount: smartacme.AcmeAccount
     let testAcmeCert: smartacme.AcmeCert
-    let testChallenge: smartacme.ISmartAcmeChallengeAccepted
+    let testChallenge: smartacme.ISmartAcmeChallengeChosen
     
     it('should create a valid instance', function (done) {
         this.timeout(10000)
-        testSmartAcme = new smartacme.SmartAcme()
+        testSmartAcme = new smartacme.SmartAcme(false)
         testSmartAcme.init().then(() => {
             should(testSmartAcme).be.instanceOf(smartacme.SmartAcme)
             done()
@@ -45,7 +45,7 @@ describe('smartacme', function () {
     })
 
     it('should create a AcmeCert', function() {
-        testAcmeAccount.createAcmeCert('test1.bleu.de').then(x => {
+        testAcmeAccount.createAcmeCert('carglide.com').then(x => {
             testAcmeCert = x
             should(testAcmeAccount).be.instanceOf(smartacme.AcmeCert)
         })
@@ -53,15 +53,15 @@ describe('smartacme', function () {
 
     it('should get a challenge for a AcmeCert', function (done) {
         this.timeout(10000)
-        testAcmeCert.requestChallenge().then((challengeAccepted) => {
-            console.log(challengeAccepted)
-            testChallenge = challengeAccepted
+        testAcmeCert.requestChallenge().then((challengeChosen) => {
+            console.log(challengeChosen)
+            testChallenge = challengeChosen
             done()
         })
     })
 
     it('should set the challenge', function(done) {
-        this.timeout(30000)
+        this.timeout(10000)
         myCflareAccount.createRecord(
             testChallenge.domainNamePrefixed,
             'TXT', testChallenge.dnsKeyHash
@@ -71,11 +71,16 @@ describe('smartacme', function () {
     })
 
     it('should check for a DNS record', function(done) {
-        this.timeout(40000)
+        this.timeout(20000)
         testAcmeCert.checkDns().then(x => {
             console.log(x)
             done()
         })
+    })
+
+    it('should accept the challenge', function(done){
+        this.timeout(10000)
+        testAcmeCert.acceptChallenge().then(() => { done() })
     })
 
     it('should poll for validation of a challenge', function (done) {
