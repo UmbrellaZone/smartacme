@@ -158,31 +158,12 @@ export class AcmeCert {
      * checks if DNS records are set, will go through a max of 30 cycles
      */
     async checkDns(cycleArg = 1) {
-        let redoCheck = async (err?) => {
-            if (cycleArg < 30) {
-                cycleArg++
-                await plugins.smartdelay.delayFor(2000)
-                return await this.checkDns(cycleArg)
-            } else {
-                console.log('failed permanently...')
-                throw err
-            }
-        }
-        console.log(`checkDns failed ${cycleArg} times and has ${30 - cycleArg} cycles to go before it fails permanently!`)
-        let myRecord
-        try {
-            myRecord = await myDnsly.getRecord(helpers.prefixName(this.domainName), 'TXT')
-            myRecord = myRecord[0][0]
-            if (myRecord === this.dnsKeyHash) {
-                console.log('and matches the required dnsKeyHash')
-            } else {
-                console.log('but does not match required dns keyHash!')
-                return redoCheck()
-            }
+        let result = await myDnsly.checkUntilAvailable(helpers.prefixName(this.domainName), 'TXT', this.dnsKeyHash)
+        if (result) {
             console.log('DNS is set!')
-            return myRecord
-        } catch (err) {
-            return redoCheck()
+            return
+        } else {
+            throw new Error('DNS not set!')
         }
     }
 
@@ -190,7 +171,6 @@ export class AcmeCert {
      * validates a challenge, only call after you have set the challenge at the expected location
      */
     async requestValidation() {
-        await plugins.smartdelay.delayFor(20000)
         let makeRequest = () => {
             let done = q.defer()
             this.parentAcmeAccount.parentSmartAcme.rawacmeClient.poll(this.chosenChallenge.uri, async (err, res) => {
@@ -200,11 +180,11 @@ export class AcmeCert {
                 }
                 console.log(`Validation response:`)
                 console.log(JSON.stringify(res.body))
-                if (res.body.status === 'pending' || 'invalid') {
-                    console.log('retry in 6 minutes!')
+                if (res.body.status === 'pending' || res.body.status === 'invalid') {
                     await plugins.smartdelay.delayFor(3000)
                     makeRequest().then((x: any) => { done.resolve(x) })
                 } else {
+                    console.log('perfect!')
                     done.resolve(res.body)
                 }
             })

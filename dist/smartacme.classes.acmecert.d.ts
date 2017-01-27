@@ -60,7 +60,7 @@ export declare class AcmeCert {
     /**
      * checks if DNS records are set, will go through a max of 30 cycles
      */
-    checkDns(cycleArg?: number): any;
+    checkDns(cycleArg?: number): Promise<void>;
     /**
      * validates a challenge, only call after you have set the challenge at the expected location
      */

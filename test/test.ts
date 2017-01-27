@@ -1,5 +1,5 @@
 import 'typings-test'
-import * as should from 'should'
+import { expect } from 'smartchai'
 import * as cflare from 'cflare'
 import * as qenv from 'qenv'
 
@@ -24,13 +24,13 @@ describe('smartacme', function () {
         this.timeout(10000)
         testSmartAcme = new smartacme.SmartAcme(false)
         testSmartAcme.init().then(() => {
-            should(testSmartAcme).be.instanceOf(smartacme.SmartAcme)
+            expect(testSmartAcme).to.be.instanceOf(smartacme.SmartAcme)
             done()
         }).catch(err => { done(err) })
     })
 
     it('should have created keyPair', function () {
-        should(testSmartAcme.acmeUrl).be.of.type('string')
+        expect(testSmartAcme.acmeUrl).to.be.a('string')
     })
 
     it('should register a new account', function (done) {
@@ -45,9 +45,9 @@ describe('smartacme', function () {
     })
 
     it('should create a AcmeCert', function() {
-        testAcmeAccount.createAcmeCert('carglide.com').then(x => {
+        testAcmeAccount.createAcmeCert('test2.bleu.de').then(x => {
             testAcmeCert = x
-            should(testAcmeAccount).be.instanceOf(smartacme.AcmeCert)
+            expect(testAcmeAccount).to.be.instanceOf(smartacme.AcmeCert)
         })
     })
 
@@ -61,7 +61,7 @@ describe('smartacme', function () {
     })
 
     it('should set the challenge', function(done) {
-        this.timeout(10000)
+        this.timeout(20000)
         myCflareAccount.createRecord(
             testChallenge.domainNamePrefixed,
             'TXT', testChallenge.dnsKeyHash
@@ -84,9 +84,19 @@ describe('smartacme', function () {
     })
 
     it('should poll for validation of a challenge', function (done) {
-        this.timeout(700000)
+        this.timeout(10000)
         testAcmeCert.requestValidation().then(x => {
             console.log(x)
+            done()
+        })
+    })
+
+    it('should remove the challenge', function(done) {
+        this.timeout(20000)
+        myCflareAccount.removeRecord(
+            testChallenge.domainNamePrefixed,
+            'TXT'
+        ).then(() => {
             done()
         })
     })
