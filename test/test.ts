@@ -1,5 +1,4 @@
-import 'typings-test'
-import { expect } from 'smartchai'
+import { expect, tap } from 'tapbundle'
 import * as cflare from 'cflare'
 import * as qenv from 'qenv'
 
@@ -10,94 +9,82 @@ import * as smartacme from '../dist/index'
 
 let myCflareAccount = new cflare.CflareAccount()
 myCflareAccount.auth({
-    email: process.env.CF_EMAIL,
-    key: process.env.CF_KEY
+  email: process.env.CF_EMAIL,
+  key: process.env.CF_KEY
 })
 
-describe('smartacme', function () {
-    let testSmartAcme: smartacme.SmartAcme
-    let testAcmeAccount: smartacme.AcmeAccount
-    let testAcmeCert: smartacme.AcmeCert
-    let testChallenge: smartacme.ISmartAcmeChallengeChosen
-    
-    it('should create a valid instance', function (done) {
-        this.timeout(10000)
-        testSmartAcme = new smartacme.SmartAcme(false)
-        testSmartAcme.init().then(() => {
-            expect(testSmartAcme).to.be.instanceOf(smartacme.SmartAcme)
-            done()
-        }).catch(err => { done(err) })
-    })
+let testSmartAcme: smartacme.SmartAcme
+let testAcmeAccount: smartacme.AcmeAccount
+let testAcmeCert: smartacme.AcmeCert
+let testChallenge: smartacme.ISmartAcmeChallengeChosen
 
-    it('should have created keyPair', function () {
-        expect(testSmartAcme.acmeUrl).to.be.a('string')
-    })
-
-    it('should register a new account', function (done) {
-        this.timeout(10000)
-        testSmartAcme.createAcmeAccount().then(x => {
-            testAcmeAccount = x
-            done()
-        }).catch(err => {
-            console.log(err)
-            done(err)
-        })
-    })
-
-    it('should create a AcmeCert', function() {
-        testAcmeAccount.createAcmeCert('test2.bleu.de').then(x => {
-            testAcmeCert = x
-            expect(testAcmeAccount).to.be.instanceOf(smartacme.AcmeCert)
-        })
-    })
-
-    it('should get a challenge for a AcmeCert', function (done) {
-        this.timeout(10000)
-        testAcmeCert.requestChallenge().then((challengeChosen) => {
-            console.log(challengeChosen)
-            testChallenge = challengeChosen
-            done()
-        })
-    })
-
-    it('should set the challenge', function(done) {
-        this.timeout(20000)
-        myCflareAccount.createRecord(
-            testChallenge.domainNamePrefixed,
-            'TXT', testChallenge.dnsKeyHash
-        ).then(() => {
-            done()
-        })
-    })
-
-    it('should check for a DNS record', function(done) {
-        this.timeout(20000)
-        testAcmeCert.checkDns().then(x => {
-            console.log(x)
-            done()
-        })
-    })
-
-    it('should accept the challenge', function(done){
-        this.timeout(10000)
-        testAcmeCert.acceptChallenge().then(() => { done() })
-    })
-
-    it('should poll for validation of a challenge', function (done) {
-        this.timeout(10000)
-        testAcmeCert.requestValidation().then(x => {
-            console.log(x)
-            done()
-        })
-    })
-
-    it('should remove the challenge', function(done) {
-        this.timeout(20000)
-        myCflareAccount.removeRecord(
-            testChallenge.domainNamePrefixed,
-            'TXT'
-        ).then(() => {
-            done()
-        })
-    })
+tap.test('smartacme -> should create a valid instance', async (tools) => {
+  tools.timeout(10000)
+  testSmartAcme = new smartacme.SmartAcme(false)
+  await testSmartAcme.init().then(async () => {
+    expect(testSmartAcme).to.be.instanceOf(smartacme.SmartAcme)
+  })
 })
+
+tap.test('smartacme -> should have created keyPair', async () => {
+  expect(testSmartAcme.acmeUrl).to.be.a('string')
+})
+
+tap.test('smartacme -> should register a new account', async (tools) => {
+  tools.timeout(10000)
+  await testSmartAcme.createAcmeAccount().then(async x => {
+    testAcmeAccount = x
+  })
+})
+
+tap.test('smartacme -> should create a AcmeCert', async () => {
+  await testAcmeAccount.createAcmeCert('test2.bleu.de').then(async x => {
+    testAcmeCert = x
+    expect(testAcmeAccount).to.be.instanceOf(smartacme.AcmeCert)
+  })
+})
+
+tap.test('smartacme -> should get a challenge for a AcmeCert', async (tools) => {
+  tools.timeout(10000)
+  await testAcmeCert.requestChallenge().then(async (challengeChosen) => {
+    console.log(challengeChosen)
+    testChallenge = challengeChosen
+  })
+})
+
+tap.test('smartacme -> should set the challenge', async (tools) => {
+  tools.timeout(20000)
+  await myCflareAccount.createRecord(
+    testChallenge.domainNamePrefixed,
+    'TXT', testChallenge.dnsKeyHash
+  )
+})
+
+tap.test('smartacme -> should check for a DNS record', async (tools) => {
+  tools.timeout(20000)
+  await testAcmeCert.checkDns().then(x => {
+    console.log(x)
+  })
+})
+
+tap.test('smartacme -> should accept the challenge', async (tools) => {
+  tools.timeout(10000)
+  await testAcmeCert.acceptChallenge()
+})
+
+tap.test('smartacme -> should poll for validation of a challenge', async (tools) => {
+  tools.timeout(10000)
+  await testAcmeCert.requestValidation().then(async x => {
+    console.log(x)
+  })
+})
+
+tap.test('smartacme -> should remove the challenge', async (tools) => {
+  tools.timeout(20000)
+  await myCflareAccount.removeRecord(
+    testChallenge.domainNamePrefixed,
+    'TXT'
+  )
+})
+
+tap.start()

@@ -2,10 +2,10 @@
 acme implementation in TypeScript
 
 ## Availabililty
-[![npm](https://push.rocks/assets/repo-button-npm.svg)](https://www.npmjs.com/package/smartacme)
-[![git](https://push.rocks/assets/repo-button-git.svg)](https://GitLab.com/pushrocks/smartacme)
-[![git](https://push.rocks/assets/repo-button-mirror.svg)](https://github.com/pushrocks/smartacme)
-[![docs](https://push.rocks/assets/repo-button-docs.svg)](https://pushrocks.gitlab.io/smartacme/)
+[![npm](https://pushrocks.gitlab.io/assets/repo-button-npm.svg)](https://www.npmjs.com/package/smartacme)
+[![git](https://pushrocks.gitlab.io/assets/repo-button-git.svg)](https://GitLab.com/pushrocks/smartacme)
+[![git](https://pushrocks.gitlab.io/assets/repo-button-mirror.svg)](https://github.com/pushrocks/smartacme)
+[![docs](https://pushrocks.gitlab.io/assets/repo-button-docs.svg)](https://pushrocks.gitlab.io/smartacme/)
 
 ## Status for master
 [![build status](https://GitLab.com/pushrocks/smartacme/badges/master/build.svg)](https://GitLab.com/pushrocks/smartacme/commits/master)
@@ -21,37 +21,9 @@ acme implementation in TypeScript
 ## Usage
 Use TypeScript for best in class instellisense.
 
-```javascript
-import { SmartAcme } from 'smartacme'
+For further information read the linked docs at the top of this README.
 
-let smac = new SmartAcme()
+> MIT licensed | **&copy;** [Lossless GmbH](https://lossless.gmbh)
+| By using this npm module you agree to our [privacy policy](https://lossless.gmbH/privacy.html)
 
-(async () => { // learn async/await, it'll make your life easier
-
-    // optionally accepts a filePath Arg with a stored acmeaccount.json
-    // will create an account and 
-    let myAccount = await smac.createAcmeAccount()
-    
-    // will return a dnsHash to set in your DNS record
-    let myCert = await myAccount.createAcmeCert('example.com')
-
-    // gets and accepts the specified challenge
-    // first argument optional, defaults to dns-01 (which is the cleanest method for production use)
-    let myChallenge = await myCert.getChallenge('dns-01')
-
-    /* ----------
-    Now you need to set the challenge in your DNS
-    myChallenge.domainNamePrefixed is the address for the record
-    myChallenge.dnsKeyHash is the ready to use txt record value expected by letsencrypt
-    -------------*/
-})()
-```
-
-## Other relevant npm modules
-module name | description
---- | ---
-cert | a higlevel production module that uses smartacme to manage certs
-smartnginx | a highlevel production tool for docker environments to manage nginx 
-
-
-[![npm](https://push.rocks/assets/repo-header.svg)](https://push.rocks)
+[![repo-footer](https://pushrocks.gitlab.io/assets/repo-footer.svg)](https://git.zone)

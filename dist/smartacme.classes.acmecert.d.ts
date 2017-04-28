@@ -1,5 +1,3 @@
-/// <reference types="q" />
-import * as q from 'q';
 import { IRsaKeypair } from './smartacme.classes.smartacme';
 import { AcmeAccount } from './smartacme.classes.acmeaccount';
 /**
@@ -56,7 +54,7 @@ export declare class AcmeCert {
      * @param domainNameArg - the domain name to request a challenge for
      * @param challengeType - the challenge type to request
      */
-    requestChallenge(challengeTypeArg?: TChallengeType): q.Promise<ISmartAcmeChallengeChosen>;
+    requestChallenge(challengeTypeArg?: TChallengeType): Promise<ISmartAcmeChallengeChosen>;
     /**
      * checks if DNS records are set, will go through a max of 30 cycles
      */
@@ -68,7 +66,7 @@ export declare class AcmeCert {
     /**
      * requests a certificate
      */
-    requestCert(): q.Promise<{}>;
+    requestCert(): Promise<{}>;
     /**
      * getCertificate - takes care of cooldown, validation polling and certificate retrieval
      */
@@ -76,5 +74,5 @@ export declare class AcmeCert {
     /**
      * accept a challenge - for private use only
      */
-    acceptChallenge(): q.Promise<{}>;
+    acceptChallenge(): Promise<{}>;
 }

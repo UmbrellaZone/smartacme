@@ -1,5 +1,3 @@
-/// <reference types="q" />
-import * as q from 'q';
 import { AcmeAccount } from './smartacme.classes.acmeaccount';
 /**
  * a rsa keypair needed for account creation and subsequent requests
@@ -25,10 +23,10 @@ export declare class SmartAcme {
     /**
      * init the smartacme instance
      */
-    init(): q.Promise<{}>;
+    init(): Promise<{}>;
     /**
      * creates an account if not currently present in module
      * @executes ASYNC
      */
-    createAcmeAccount(): q.Promise<AcmeAccount>;
+    createAcmeAccount(): Promise<AcmeAccount>;
 }
