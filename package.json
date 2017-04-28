@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/pushrocks/smartacme.git"
+    "url": "git+ssh://git@gitlab.com/umbrellazone/smartacme.git"
   },
   "keywords": [
     "TypeScript",
@@ -19,9 +19,9 @@
   "author": "Lossless GmbH",
   "license": "MIT",
   "bugs": {
-    "url": "https://gitlab.com/pushrocks/smartacme/issues"
+    "url": "https://gitlab.com/umbrellazone/smartacme/issues"
   },
-  "homepage": "https://gitlab.com/pushrocks/smartacme#README",
+  "homepage": "https://gitlab.com/umbrellazone/smartacme#README",
   "dependencies": {
     "@types/node-forge": "^0.6.8",
     "dnsly": "^2.0.4",
