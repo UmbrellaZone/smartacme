@@ -1,82 +1,47 @@
-// third party modules
-import * as q from 'smartq' // promises
-import * as plugins from './smartacme.plugins'
-import * as helpers from './smartacme.helpers'
+const acme = require('acme-v2').ACME.create({
+  RSA: require('rsa-compat').RSA,
 
-import { AcmeAccount } from './smartacme.classes.acmeaccount'
+  // other overrides
+  promisify: require('util').promisify,
 
-/**
- * a rsa keypair needed for account creation and subsequent requests
- */
-export interface IRsaKeypair {
-  publicKey: string
-  privateKey: string
-}
+  // used for constructing user-agent
+  os: require('os'),
+  process: require('process'),
 
-export { AcmeAccount } from './smartacme.classes.acmeaccount'
-export { AcmeCert, ISmartAcmeChallenge, ISmartAcmeChallengeChosen } from './smartacme.classes.acmecert'
+  // used for overriding the default user-agent
+  userAgent: 'My custom UA String',
+  getUserAgentString: function(deps) {
+    return 'My custom UA String';
+  },
 
-/**
- * class SmartAcme exports methods for maintaining SSL Certificates
- */
+  // don't try to validate challenges locally
+  skipChallengeTest: false
+});
+
+import { KeyPair } from './smartacme.classes.keypair';
+
 export class SmartAcme {
-  acmeUrl: string // the acme url to use for this instance
-  productionBool: boolean // a boolean to quickly know wether we are in production or not
-  keyPair: IRsaKeypair // the keyPair needed for account creation
-  rawacmeClient
+  keyPair: KeyPair;
+  directoryUrls: any;
 
-  /**
-   * the constructor for class SmartAcme
-   */
-  constructor(productionArg: boolean = false) {
-    this.productionBool = productionArg
-    this.keyPair = helpers.createKeypair()
-    if (this.productionBool) {
-      this.acmeUrl = plugins.rawacme.LETSENCRYPT_URL
-    } else {
-      this.acmeUrl = plugins.rawacme.LETSENCRYPT_STAGING_URL
-    }
-  }
+  async init() {
+    // get directory url
+    this.directoryUrls = await acme.init('https://acme-staging-v02.api.letsencrypt.org/directory');
 
-  /**
-   * init the smartacme instance
-   */
-  init() {
-    let done = q.defer()
-    plugins.rawacme.createClient(
-      {
-        url: this.acmeUrl,
-        publicKey: this.keyPair.publicKey,
-        privateKey: this.keyPair.privateKey
-      },
-      (err, client) => {
-        if (err) {
-          console.error('smartacme: something went wrong:')
-          console.log(err)
-          done.reject(err)
-          return
-        }
+    // create keyPair
+    this.keyPair = await KeyPair.generateFresh();
 
-        // make client available in class 
-        this.rawacmeClient = client
-        done.resolve()
+    // get account
+    const registrationData = await acme.accounts.create({
+      email: 'domains@lossless.org', // valid email (server checks MX records)
+      accountKeypair: this.keyPair.rsaKeyPair,
+      agreeToTerms: async tosUrl => {
+        return tosUrl;
       }
-    )
-    return done.promise
-  }
+    }).catch(e => {
+      console.log(e);
+    });
 
-  /**
-   * creates an account if not currently present in module
-   * @executes ASYNC
-   */
-  createAcmeAccount() {
-    let done = q.defer<AcmeAccount>()
-    let acmeAccount = new AcmeAccount(this)
-    acmeAccount.register().then(() => {
-      return acmeAccount.agreeTos()
-    }).then(() => {
-      done.resolve(acmeAccount)
-    })
-    return done.promise
+    console.log(registrationData);
   }
 }
