@@ -23,6 +23,7 @@
   },
   "homepage": "https://gitlab.com/umbrellazone/smartacme#README",
   "dependencies": {
+    "@pushrocks/smartdelay": "^2.0.2",
     "@pushrocks/smartpromise": "^2.0.5",
     "acme-v2": "^1.2.0",
     "rsa-compat": "^1.5.1"
