@@ -2,7 +2,7 @@ import * as plugins from './smartacme.plugins';
 const rsa = require('rsa-compat').RSA;
 
 export class KeyPair {
-  rsaKeyPair: any
+  rsaKeyPair: any;
 
   /**
    * generates a fresh rsa keyPair
@@ -11,7 +11,7 @@ export class KeyPair {
     const done = plugins.smartpromise.defer();
     var options = { bitlen: 2048, exp: 65537, public: true, pem: true, internal: true };
     rsa.generateKeypair(options, function(err, keypair) {
-      if(err) {
+      if (err) {
         console.log(err);
       }
       done.resolve(keypair);

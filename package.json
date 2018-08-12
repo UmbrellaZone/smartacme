@@ -1,11 +1,13 @@
 {
   "name": "smartacme",
   "version": "1.1.1",
+  "private": false,
   "description": "acme implementation in TypeScript",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "test": "(tstest test/)"
+    "test": "(tstest test/)",
+    "build": "echo \"Not needed for now\""
   },
   "repository": {
     "type": "git",

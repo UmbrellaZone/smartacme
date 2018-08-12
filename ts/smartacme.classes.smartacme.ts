@@ -1,9 +1,6 @@
 const acme = require('acme-v2').ACME.create({
   RSA: require('rsa-compat').RSA,
 
-  // other overrides
-  promisify: require('util').promisify,
-
   // used for constructing user-agent
   os: require('os'),
   process: require('process'),
