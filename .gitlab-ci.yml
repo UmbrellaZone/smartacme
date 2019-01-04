@@ -26,6 +26,7 @@ mirror:
 snyk:
   stage: security
   script:
+    - npmci npm prepare
     - npmci command npm install -g snyk
     - npmci command npm install --ignore-scripts
     - npmci command snyk test
@@ -33,24 +34,39 @@ snyk:
   - docker
   - notpriv
 
+sast:
+  stage: security
+  image: registry.gitlab.com/hosttoday/ht-docker-dbase:npmci
+  variables:
+    DOCKER_DRIVER: overlay2
+  allow_failure: true
+  services:
+    - docker:stable-dind
+  script:
+    - npmci npm prepare
+    - npmci npm install
+    - npmci command npm run build
+    - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
+    - docker run
+        --env SAST_CONFIDENCE_LEVEL="${SAST_CONFIDENCE_LEVEL:-3}"
+        --volume "$PWD:/code"
+        --volume /var/run/docker.sock:/var/run/docker.sock
+        "registry.gitlab.com/gitlab-org/security-products/sast:$SP_VERSION" /app/bin/run /code
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+  tags:
+  - docker
+  - priv
+
 # ====================
 # test stage
 # ====================
-testLEGACY:
-  stage: test
-  script:
-  - npmci node install legacy
-  - npmci npm install
-  - npmci npm test
-  coverage: /\d+.?\d+?\%\s*coverage/
-  tags:
-  - docker
-  - notpriv
-  allow_failure: true
 
 testLTS:
   stage: test
   script:
+  - npmci npm prepare
   - npmci node install lts
   - npmci npm install
   - npmci npm test
@@ -62,6 +78,7 @@ testLTS:
 testSTABLE:
   stage: test
   script:
+  - npmci npm prepare
   - npmci node install stable
   - npmci npm install
   - npmci npm test
@@ -118,6 +135,7 @@ pages:
   stage: metadata
   script:
     - npmci command npm install -g typedoc typescript
+    - npmci npm prepare
     - npmci npm install
     - npmci command typedoc --module "commonjs" --target "ES2016" --out public/ ts/
   tags:
@@ -129,14 +147,4 @@ pages:
     expire_in: 1 week
     paths:
     - public
-  allow_failure: true
-
-windowsCompatibility:
-  image: stefanscherer/node-windows:10-build-tools
-  stage: metadata
-  script:
-  - npm install & npm test
-  coverage: /\d+.?\d+?\%\s*coverage/
-  tags:
-  - windows
   allow_failure: true

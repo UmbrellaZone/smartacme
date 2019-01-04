@@ -7,7 +7,7 @@
   "typings": "dist/index.d.ts",
   "scripts": {
     "test": "(tstest test/)",
-    "build": "echo \"Not needed for now\""
+    "build": "(tsbuild)"
   },
   "repository": {
     "type": "git",
