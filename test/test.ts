@@ -16,7 +16,7 @@ tap.test('should create a valid instance of SmartAcme', async () => {
       console.log(args);
     } 
   });
-  await smartAcmeInstance.getCertificateForDomain('bleu.de');
+  // await smartAcmeInstance.getCertificateForDomain('bleu.de');
 });
 
 tap.start();
