@@ -1,86 +1,96 @@
-const acme = require('acme-v2').ACME.create({
-  RSA: require('rsa-compat').RSA,
-
-  // used for constructing user-agent
-  os: require('os'),
-  process: require('process'),
-
-  // used for overriding the default user-agent
-  userAgent: 'My custom UA String',
-  getUserAgentString: function(deps) {
-    return 'My custom UA String';
-  },
-
-  // don't try to validate challenges locally
-  skipChallengeTest: true
-});
-
-import { KeyPair } from './smartacme.classes.keypair';
 import * as plugins from './smartacme.plugins';
-const rsa = require('rsa-compat').RSA;
+
+/**
+ *
+ */
+export interface ISmartAcmeStorage {}
 
 export class SmartAcme {
-  domainKeyPair: KeyPair;
-  accountKeyPair: KeyPair;
-  accountData: any;
-  directoryUrls: any;
+  // the acme client
+  private client: any;
 
-  async init() {
-    // get directory url
-    this.directoryUrls = await acme.init('https://acme-staging-v02.api.letsencrypt.org/directory');
+  // the account private key
+  private privateKey: string;
 
-    // create keyPairs
-    this.domainKeyPair = await KeyPair.generateFresh();
-    this.accountKeyPair = await KeyPair.generateFresh();
+  // challenge fullfillment
+  private setChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
+  private removeChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
 
-    // get account
-    const registrationData = await acme.accounts
-      .create({
-        email: 'domains@lossless.org', // valid email (server checks MX records)
-        accountKeypair: this.accountKeyPair.rsaKeyPair,
-        agreeToTerms: async tosUrl => {
-          return tosUrl;
+  public async init(optionsArg: {
+    accountPrivateKey?: string;
+    accountEmail: string;
+    setChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
+    removeChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
+  }) {
+    this.privateKey = optionsArg.accountPrivateKey || (await plugins.acme.forge.createPrivateKey());
+    this.setChallenge = optionsArg.setChallenge;
+    this.removeChallenge = optionsArg.removeChallenge;
+    this.client = new plugins.acme.Client({
+      directoryUrl: plugins.acme.directory.letsencrypt.staging,
+      accountKey: this.privateKey
+    });
+
+    /* Register account */
+    await this.client.createAccount({
+      termsOfServiceAgreed: true,
+      contact: [`mailto:${optionsArg.accountEmail}`]
+    });
+  }
+
+  public async getCertificateForDomain(domainArg: string) {
+    const domain = domainArg;
+
+    /* Place new order */
+    const order = await this.client.createOrder({
+      identifiers: [{ type: 'dns', value: domain }, { type: 'dns', value: `*.${domain}` }]
+    });
+
+    /* Get authorizations and select challenges */
+    const authorizations = await this.client.getAuthorizations(order);
+
+    const promises = authorizations.map(async authz => {
+      const challenge = authz.challenges.pop();
+      const keyAuthorization = await this.client.getChallengeKeyAuthorization(challenge);
+
+      try {
+        /* Satisfy challenge */
+        await this.setChallenge(authz, challenge, keyAuthorization);
+
+        /* Verify that challenge is satisfied */
+        await this.client.verifyChallenge(authz, challenge);
+
+        /* Notify ACME provider that challenge is satisfied */
+        await this.client.completeChallenge(challenge);
+
+        /* Wait for ACME provider to respond with valid status */
+        await this.client.waitForValidStatus(challenge);
+      } finally {
+        /* Clean up challenge response */
+        try {
+          await this.removeChallenge(authz, challenge, keyAuthorization);
+        } catch (e) {
+          console.log(e);
         }
-      })
-      .catch(e => {
-        console.log(e);
-      });
-    this.accountData = registrationData;
+      }
+    });
+
+    /* Wait for challenges to complete */
+    await Promise.all(promises);
+
+    /* Finalize order */
+    const [key, csr] = await plugins.acme.forge.createCsr({
+      commonName: `*.${domain}`,
+      altNames: [domain]
+    });
+
+    await this.client.finalizeOrder(order, csr);
+    const cert = await this.client.getCertificate(order);
+
+    /* Done */
+    console.log(`CSR:\n${csr.toString()}`);
+    console.log(`Private key:\n${key.toString()}`);
+    console.log(`Certificate:\n${cert.toString()}`);
   }
 
-  async getCertificateForDomain(domain) {
-    const result = await acme.certificates
-      .create({
-        domainKeypair: this.domainKeyPair.rsaKeyPair,
-        accountKeypair: this.accountKeyPair.rsaKeyPair,
-        domains: ['bleu.de'],
-        challengeType: 'dns-01',
-
-        setChallenge: async (hostname, key, val, cb) => {
-          console.log('set challenge');
-          console.log(hostname);
-          //console.log(key);
-          //console.log(val);
-          const dnsKey = rsa.utils.toWebsafeBase64(
-            require('crypto')
-              .createHash('sha256')
-              .update(val)
-              .digest('base64')
-          );
-
-          console.log(dnsKey);
-          await plugins.smartdelay.delayFor(20000);
-          console.log('ready!');
-          cb();
-        }, // return Promise
-        removeChallenge: async (hostname, key) => {
-          console.log('removing challenge');
-          return;
-        } // return Promise
-      })
-      .catch(e => {
-        console.log(e);
-      }); // returns Promise<pems={ privkey (key), cert, chain (ca) }>
-    console.log(result);
-  }
+  toStorageObject () {};
 }
