@@ -1,8 +1,9 @@
 // @pushrocks scope
-import * as smartpromise from '@pushrocks/smartpromise';
 import * as smartdelay from '@pushrocks/smartdelay';
+import * as smartdns from '@pushrocks/smartdns';
+import * as smartpromise from '@pushrocks/smartpromise';
 
-export { smartpromise, smartdelay };
+export { smartdelay, smartdns, smartpromise };
 
 // thirs party scope
 import * as acme from 'acme-client';

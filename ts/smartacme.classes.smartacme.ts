@@ -8,6 +8,7 @@ export interface ISmartAcmeStorage {}
 export class SmartAcme {
   // the acme client
   private client: any;
+  private smartdns = new plugins.smartdns.Smartdns();
 
   // the account private key
   private privateKey: string;
@@ -48,7 +49,7 @@ export class SmartAcme {
     /* Get authorizations and select challenges */
     const authorizations = await this.client.getAuthorizations(order);
 
-    const promises = authorizations.map(async authz => {
+    for (const authz of authorizations) {
       console.log(authz);
       const domainDnsName: string = `_acme-challenge.${authz.identifier.value}`;
       const dnsChallenge: string = authz.challenges.find(challengeArg => {
@@ -60,6 +61,8 @@ export class SmartAcme {
       try {
         /* Satisfy challenge */
         await this.setChallenge(domainDnsName, keyAuthorization);
+        await this.smartdns.checkUntilAvailable(domainDnsName, 'TXT', keyAuthorization);
+
 
         /* Verify that challenge is satisfied */
         await this.client.verifyChallenge(authz, dnsChallenge);
@@ -77,10 +80,7 @@ export class SmartAcme {
           console.log(e);
         }
       }
-    });
-
-    /* Wait for challenges to complete */
-    await Promise.all(promises);
+    }
 
     /* Finalize order */
     const [key, csr] = await plugins.acme.forge.createCsr({
