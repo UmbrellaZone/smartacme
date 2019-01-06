@@ -13,14 +13,14 @@ export class SmartAcme {
   private privateKey: string;
 
   // challenge fullfillment
-  private setChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
-  private removeChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
+  private setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
+  private removeChallenge: (domainName: string) => Promise<any>;
 
   public async init(optionsArg: {
     accountPrivateKey?: string;
     accountEmail: string;
-    setChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
-    removeChallenge: (authz, challenge, keyAuthorization) => Promise<any>;
+    setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>
+    removeChallenge: (domainName: string) => Promise<any>;
   }) {
     this.privateKey = optionsArg.accountPrivateKey || (await plugins.acme.forge.createPrivateKey());
     this.setChallenge = optionsArg.setChallenge;
@@ -49,25 +49,30 @@ export class SmartAcme {
     const authorizations = await this.client.getAuthorizations(order);
 
     const promises = authorizations.map(async authz => {
-      const challenge = authz.challenges.pop();
-      const keyAuthorization = await this.client.getChallengeKeyAuthorization(challenge);
+      console.log(authz);
+      const domainDnsName: string = `_acme-challenge.${authz.identifier.value}`;
+      const dnsChallenge: string = authz.challenges.find(challengeArg => {
+        return challengeArg.type === 'dns-01';
+      });
+      // process.exit(1);
+      const keyAuthorization: string = await this.client.getChallengeKeyAuthorization(dnsChallenge);
 
       try {
         /* Satisfy challenge */
-        await this.setChallenge(authz, challenge, keyAuthorization);
+        await this.setChallenge(domainDnsName, keyAuthorization);
 
         /* Verify that challenge is satisfied */
-        await this.client.verifyChallenge(authz, challenge);
+        await this.client.verifyChallenge(authz, dnsChallenge);
 
         /* Notify ACME provider that challenge is satisfied */
-        await this.client.completeChallenge(challenge);
+        await this.client.completeChallenge(dnsChallenge);
 
         /* Wait for ACME provider to respond with valid status */
-        await this.client.waitForValidStatus(challenge);
+        await this.client.waitForValidStatus(dnsChallenge);
       } finally {
         /* Clean up challenge response */
         try {
-          await this.removeChallenge(authz, challenge, keyAuthorization);
+          await this.removeChallenge(domainDnsName);
         } catch (e) {
           console.log(e);
         }
@@ -92,5 +97,5 @@ export class SmartAcme {
     console.log(`Certificate:\n${cert.toString()}`);
   }
 
-  toStorageObject () {};
+  toStorageObject() {}
 }
