@@ -61,7 +61,7 @@ export class SmartAcme {
       try {
         /* Satisfy challenge */
         await this.setChallenge(domainDnsName, keyAuthorization);
-        await this.smartdns.checkUntilAvailable(domainDnsName, 'TXT', keyAuthorization);
+        await this.smartdns.checkUntilAvailable(domainDnsName, 'TXT', keyAuthorization, 100, 5000);
 
 
         /* Verify that challenge is satisfied */
