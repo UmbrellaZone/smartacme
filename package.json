@@ -25,6 +25,7 @@
   },
   "homepage": "https://gitlab.com/umbrellazone/smartacme#README",
   "dependencies": {
+    "@pushrocks/smartdata": "^3.1.2",
     "@pushrocks/smartdelay": "^2.0.2",
     "@pushrocks/smartdns": "^3.0.8",
     "@pushrocks/smartpromise": "^2.0.5",
