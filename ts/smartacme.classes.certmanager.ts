@@ -1,5 +1,8 @@
 import * as plugins from './smartacme.plugins';
 import { Cert } from './smartacme.classes.cert';
+import { SmartAcme } from './smartacme.classes.smartacme';
+
+import * as interfaces from './interfaces';
 
 
 export class CertManager {
@@ -15,16 +18,22 @@ export class CertManager {
   private mongoDescriptor: plugins.smartdata.IMongoDescriptor;
   public smartdataDb: plugins.smartdata.SmartdataDb;
 
-  constructor(optionsArg: {
+  public pendingMap: plugins.lik.Stringmap;
+
+  constructor(smartAcmeArg: SmartAcme,optionsArg: {
     mongoDescriptor: plugins.smartdata.IMongoDescriptor;
   }) {
     this.mongoDescriptor = optionsArg.mongoDescriptor;
   }
 
   public async init () {
+    // Smartdata DB
     this.smartdataDb = new plugins.smartdata.SmartdataDb(this.mongoDescriptor);
     await this.smartdataDb.init();
     CertManager.activeDB = this.smartdataDb;
+
+    // Pending Map
+    this.pendingMap = new plugins.lik.Stringmap();
   };
 
   /**
@@ -33,6 +42,7 @@ export class CertManager {
    * @param domainName the domain Name to retrieve the vcertificate for
    */
   public async retrieveCertificate(domainName: string): Promise<Cert> {
+    await this.checkCerts();
     const existingCertificate: Cert = await Cert.getInstance({
       name: domainName
     });
@@ -56,12 +66,27 @@ export class CertManager {
     cert.save();
   };
 
-  public async deleteCertificate(domainName: string) {
+  public async deleteCertificate(domainNameArg: string) {
 
-  };
+  }
+
+  public async getCertificateStatus(domainNameArg: string): Promise<interfaces.TCertStatus> {
+    const isPending = this.pendingMap.checkString('domainNameArg');
+    if (isPending) {
+      return 'pending';
+    }
+
+    // otherwise lets continue
+    const existingCertificate = this.retrieveCertificate(domainNameArg);
+    if (existingCertificate) {
+      return 'existing';
+    }
+
+    return 'nonexisting';
+  }
 
   /**
    * checks all certs for expiration
    */
-  checkCerts() {}
+  private async checkCerts() {};
 }

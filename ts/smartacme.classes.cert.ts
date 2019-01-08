@@ -1,4 +1,7 @@
 import * as plugins from './smartacme.plugins';
+
+import * as interfaces from './interfaces';
+
 import { CertManager } from './smartacme.classes.certmanager';
 
 import { Collection, svDb, unI } from '@pushrocks/smartdata';
@@ -6,24 +9,24 @@ import { Collection, svDb, unI } from '@pushrocks/smartdata';
 @plugins.smartdata.Collection(() => {
   return CertManager.activeDB;
 })
-export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> {
+export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements interfaces.ICert {
   @unI()
   public index: string;
 
   @svDb()
-  domainName: string;
+  public domainName: string;
 
   @svDb()
-  created: number;
+  public created: number;
 
   @svDb()
-  privateKey: string;
+  public privateKey: string;
   
   @svDb()
-  publicKey: string;
+  public publicKey: string;
   
   @svDb()
-  csr: string;
+  public csr: string;
 
   constructor(privateKeyArg: string, publicKeyArg: string, csrArg: string) {
     super();

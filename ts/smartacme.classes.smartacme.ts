@@ -1,6 +1,8 @@
 import * as plugins from './smartacme.plugins';
 import { CertManager } from './smartacme.classes.certmanager';
-import { CertRemoteHandler } from './smartacme.classes.certremotehandler';
+
+import * as interfaces from './interfaces';
+import { request } from 'http';
 
 /**
  *
@@ -8,9 +10,10 @@ import { CertRemoteHandler } from './smartacme.classes.certremotehandler';
 export interface ISmartAcmeOptions {
   accountPrivateKey?: string;
   accountEmail: string;
+  mongoDescriptor: plugins.smartdata.IMongoDescriptor;
   setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
   removeChallenge: (domainName: string) => Promise<any>;
-  mongoDescriptor: plugins.smartdata.IMongoDescriptor;
+  validateRemoteRequest: () => Promise<boolean>;
 }
 
 export class SmartAcme {
@@ -26,26 +29,64 @@ export class SmartAcme {
   // challenge fullfillment
   private setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
   private removeChallenge: (domainName: string) => Promise<any>;
+  private validateRemoteRequest: () => Promise<boolean>;
 
   // certmanager
   private certmanager: CertManager;
-  private certremoteHandler: CertRemoteHandler;
+  private certremoteHandler: plugins.smartexpress.Handler;
 
   constructor(optionsArg: ISmartAcmeOptions) {
     this.options = optionsArg;
   }
 
+  /**
+   * inits the instance
+   */
   public async init() {
-    this.privateKey = this.options.accountPrivateKey || (await plugins.acme.forge.createPrivateKey());
+    this.privateKey =
+      this.options.accountPrivateKey || (await plugins.acme.forge.createPrivateKey());
     this.setChallenge = this.options.setChallenge;
     this.removeChallenge = this.options.removeChallenge;
 
-    this.certmanager = new CertManager({
+    // CertMangaer
+    this.certmanager = new CertManager(this, {
       mongoDescriptor: this.options.mongoDescriptor
     });
     await this.certmanager.init();
-    this.certremoteHandler = new CertRemoteHandler();
 
+    // CertRemoteHandler
+    this.certremoteHandler = new plugins.smartexpress.Handler('POST', async (req, res) => {
+      const requestBody: interfaces.ICertRemoteRequest = req.body;
+      const status: interfaces.TCertStatus = await this.certmanager.getCertificateStatus(requestBody.domainName);
+      const existingCertificate = await this.certmanager.retrieveCertificate(
+        requestBody.domainName
+      );
+      let response: interfaces.ICertRemoteResponse;
+      switch (status) {
+         case 'existing':
+          response = {
+            status,
+            certificate: {
+              created: existingCertificate.created,
+              csr: existingCertificate.csr,
+              domainName: existingCertificate.domainName,
+              privateKey: existingCertificate.privateKey,
+              publicKey: existingCertificate.publicKey
+            }
+          };
+          break;
+        default:
+          response = {
+            status
+          };
+          break;
+      }
+      res.status(200);
+      res.send(response);
+      res.end();
+    });
+
+    // ACME Client
     this.client = new plugins.acme.Client({
       directoryUrl: plugins.acme.directory.letsencrypt.staging,
       accountKey: this.privateKey
@@ -63,7 +104,7 @@ export class SmartAcme {
 
     const retrievedCertificate = await this.certmanager.retrieveCertificate(domain);
 
-    if(retrievedCertificate) {
+    if (retrievedCertificate) {
       return retrievedCertificate;
     }
 
@@ -123,6 +164,4 @@ export class SmartAcme {
 
     this.certmanager.storeCertificate(key.toString(), cert.toString(), csr.toString());
   }
-
-  toStorageObject() {}
 }
