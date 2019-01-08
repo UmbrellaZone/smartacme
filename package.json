@@ -25,11 +25,16 @@
   },
   "homepage": "https://gitlab.com/umbrellazone/smartacme#README",
   "dependencies": {
-    "@pushrocks/smartdata": "^3.1.2",
+    "@pushrocks/lik": "^3.0.4",
+    "@pushrocks/smartdata": "^3.1.13",
     "@pushrocks/smartdelay": "^2.0.2",
     "@pushrocks/smartdns": "^3.0.8",
+    "@pushrocks/smartexpress": "^3.0.0",
     "@pushrocks/smartpromise": "^2.0.5",
-    "acme-client": "^2.2.1"
+    "@pushrocks/smartrequest": "^1.1.14",
+    "@pushrocks/smarttime": "^3.0.5",
+    "@pushrocks/smartunique": "^3.0.1",
+    "acme-client": "^2.2.2"
   },
   "devDependencies": {
     "@gitzone/tsbuild": "^2.1.4",

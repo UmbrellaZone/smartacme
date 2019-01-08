@@ -1,11 +1,21 @@
 import * as plugins from './smartacme.plugins';
+import { CertManager } from './smartacme.classes.certmanager';
+import { CertRemoteHandler } from './smartacme.classes.certremotehandler';
 
 /**
  *
  */
-export interface ISmartAcmeStorage {}
+export interface ISmartAcmeOptions {
+  accountPrivateKey?: string;
+  accountEmail: string;
+  setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
+  removeChallenge: (domainName: string) => Promise<any>;
+  mongoDescriptor: plugins.smartdata.IMongoDescriptor;
+}
 
 export class SmartAcme {
+  private options: ISmartAcmeOptions;
+
   // the acme client
   private client: any;
   private smartdns = new plugins.smartdns.Smartdns();
@@ -17,15 +27,25 @@ export class SmartAcme {
   private setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
   private removeChallenge: (domainName: string) => Promise<any>;
 
-  public async init(optionsArg: {
-    accountPrivateKey?: string;
-    accountEmail: string;
-    setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>
-    removeChallenge: (domainName: string) => Promise<any>;
-  }) {
-    this.privateKey = optionsArg.accountPrivateKey || (await plugins.acme.forge.createPrivateKey());
-    this.setChallenge = optionsArg.setChallenge;
-    this.removeChallenge = optionsArg.removeChallenge;
+  // certmanager
+  private certmanager: CertManager;
+  private certremoteHandler: CertRemoteHandler;
+
+  constructor(optionsArg: ISmartAcmeOptions) {
+    this.options = optionsArg;
+  }
+
+  public async init() {
+    this.privateKey = this.options.accountPrivateKey || (await plugins.acme.forge.createPrivateKey());
+    this.setChallenge = this.options.setChallenge;
+    this.removeChallenge = this.options.removeChallenge;
+
+    this.certmanager = new CertManager({
+      mongoDescriptor: this.options.mongoDescriptor
+    });
+    await this.certmanager.init();
+    this.certremoteHandler = new CertRemoteHandler();
+
     this.client = new plugins.acme.Client({
       directoryUrl: plugins.acme.directory.letsencrypt.staging,
       accountKey: this.privateKey
@@ -34,12 +54,18 @@ export class SmartAcme {
     /* Register account */
     await this.client.createAccount({
       termsOfServiceAgreed: true,
-      contact: [`mailto:${optionsArg.accountEmail}`]
+      contact: [`mailto:${this.options.accountEmail}`]
     });
   }
 
   public async getCertificateForDomain(domainArg: string) {
     const domain = domainArg;
+
+    const retrievedCertificate = await this.certmanager.retrieveCertificate(domain);
+
+    if(retrievedCertificate) {
+      return retrievedCertificate;
+    }
 
     /* Place new order */
     const order = await this.client.createOrder({
@@ -62,7 +88,6 @@ export class SmartAcme {
         /* Satisfy challenge */
         await this.setChallenge(domainDnsName, keyAuthorization);
         await this.smartdns.checkUntilAvailable(domainDnsName, 'TXT', keyAuthorization, 100, 5000);
-
 
         /* Verify that challenge is satisfied */
         await this.client.verifyChallenge(authz, dnsChallenge);
@@ -95,6 +120,8 @@ export class SmartAcme {
     console.log(`CSR:\n${csr.toString()}`);
     console.log(`Private key:\n${key.toString()}`);
     console.log(`Certificate:\n${cert.toString()}`);
+
+    this.certmanager.storeCertificate(key.toString(), cert.toString(), csr.toString());
   }
 
   toStorageObject() {}
