@@ -5,7 +5,7 @@ import * as interfaces from './interfaces';
 import { request } from 'http';
 
 /**
- * the options for the @see SmartAcme
+ * the options for the class @see SmartAcme
  */
 export interface ISmartAcmeOptions {
   accountPrivateKey?: string;
