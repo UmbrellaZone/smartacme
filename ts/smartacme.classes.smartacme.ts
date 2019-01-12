@@ -1,4 +1,5 @@
 import * as plugins from './smartacme.plugins';
+import { Cert } from './smartacme.classes.cert';
 import { CertManager } from './smartacme.classes.certmanager';
 
 import * as interfaces from './interfaces';
@@ -112,9 +113,11 @@ export class SmartAcme {
     });
   }
 
-  public async stop() {};
+  public async stop() {
+    await this.certmanager.smartdataDb.close();
+  }
 
-  public async getCertificateForDomain(domainArg: string) {
+  public async getCertificateForDomain(domainArg: string): Promise<Cert> {
     const domain = domainArg;
 
     const retrievedCertificate = await this.certmanager.retrieveCertificate(domain);
