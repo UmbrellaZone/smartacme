@@ -45,7 +45,7 @@ export class CertManager {
   public async retrieveCertificate(domainName: string): Promise<Cert> {
     await this.checkCerts();
     const existingCertificate: Cert = await Cert.getInstance({
-      name: domainName
+      domainName
     });
 
     if(existingCertificate) {
