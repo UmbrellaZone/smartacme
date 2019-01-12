@@ -16,6 +16,16 @@ export interface ISmartAcmeOptions {
   validateRemoteRequest: () => Promise<boolean>;
 }
 
+/**
+ * The main SmartAcme class
+ * can be used setting up communication with an ACME authority
+ * 
+ * ```ts
+ * const mySmartAcmeInstance = new SmartAcme({
+ *  // see ISmartAcmeOptions for options
+ * })
+ * ```
+ */
 export class SmartAcme {
   private options: ISmartAcmeOptions;
 
