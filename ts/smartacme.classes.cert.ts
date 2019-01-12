@@ -31,8 +31,10 @@ export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements inte
 
   constructor(optionsArg: ICert) {
     super();
-    Object.keys(optionsArg).forEach(key => {
-      this[key] = optionsArg[key];
-    });
+    if (optionsArg) {
+      Object.keys(optionsArg).forEach(key => {
+        this[key] = optionsArg[key];
+      });
+    }
   }
 }
