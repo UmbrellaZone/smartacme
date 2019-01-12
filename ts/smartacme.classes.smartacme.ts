@@ -5,7 +5,7 @@ import * as interfaces from './interfaces';
 import { request } from 'http';
 
 /**
- *
+ * the options for the @see SmartAcme
  */
 export interface ISmartAcmeOptions {
   accountPrivateKey?: string;
@@ -17,8 +17,8 @@ export interface ISmartAcmeOptions {
 }
 
 /**
- * The main SmartAcme class
- * can be used setting up communication with an ACME authority
+ * class SmartAcme
+ * can be used for setting up communication with an ACME authority
  * 
  * ```ts
  * const mySmartAcmeInstance = new SmartAcme({
