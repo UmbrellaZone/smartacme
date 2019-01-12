@@ -3,6 +3,7 @@ import { Cert } from './smartacme.classes.cert';
 import { SmartAcme } from './smartacme.classes.smartacme';
 
 import * as interfaces from './interfaces';
+import { ICert } from './interfaces';
 
 
 export class CertManager {
@@ -61,8 +62,8 @@ export class CertManager {
    * @param privateKeyArg 
    * @param csrArg 
    */
-  public async storeCertificate(privateKeyArg: string, publicKeyArg: string, csrArg: string) {
-    const cert = new Cert(privateKeyArg, publicKeyArg, csrArg);
+  public async storeCertificate(optionsArg: ICert) {
+    const cert = new Cert(optionsArg);
     cert.save();
   };
 

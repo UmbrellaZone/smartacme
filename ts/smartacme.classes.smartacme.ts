@@ -41,6 +41,9 @@ export class SmartAcme {
 
   /**
    * inits the instance
+   * ```ts
+   * await myCloudlyInstance.init() // does not support options
+   * ```
    */
   public async init() {
     this.privateKey =
@@ -98,6 +101,8 @@ export class SmartAcme {
       contact: [`mailto:${this.options.accountEmail}`]
     });
   }
+
+  public async stop() {};
 
   public async getCertificateForDomain(domainArg: string) {
     const domain = domainArg;
@@ -162,6 +167,15 @@ export class SmartAcme {
     console.log(`Private key:\n${key.toString()}`);
     console.log(`Certificate:\n${cert.toString()}`);
 
-    this.certmanager.storeCertificate(key.toString(), cert.toString(), csr.toString());
+    await this.certmanager.storeCertificate({
+      domainName: domainArg,
+      privateKey: key.toString(),
+      publicKey: cert.toString(),
+      csr: csr.toString(),
+      created: Date.now()
+    });
+
+    const newCertificate = await this.certmanager.retrieveCertificate(domainArg);
+    return newCertificate;
   }
 }
