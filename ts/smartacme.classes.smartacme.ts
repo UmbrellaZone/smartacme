@@ -152,6 +152,8 @@ export class SmartAcme {
         /* Satisfy challenge */
         await this.setChallenge(domainDnsName, keyAuthorization);
         await this.smartdns.checkUntilAvailable(domainDnsName, 'TXT', keyAuthorization, 100, 5000);
+        console.log('Cool down an extra 60 second for region availability');
+        await plugins.smartdelay.delayFor(60000);
 
         /* Verify that challenge is satisfied */
         await this.client.verifyChallenge(authz, dnsChallenge);
