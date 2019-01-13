@@ -32,6 +32,7 @@
     "@pushrocks/smartexpress": "^3.0.0",
     "@pushrocks/smartpromise": "^2.0.5",
     "@pushrocks/smartrequest": "^1.1.14",
+    "@pushrocks/smartstring": "^3.0.8",
     "@pushrocks/smarttime": "^3.0.5",
     "@pushrocks/smartunique": "^3.0.1",
     "acme-client": "^2.2.2"

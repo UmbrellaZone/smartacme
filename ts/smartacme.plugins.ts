@@ -7,9 +7,10 @@ import * as smartexpress from '@pushrocks/smartexpress';
 import * as smartpromise from '@pushrocks/smartpromise';
 import * as smartrequest from '@pushrocks/smartrequest';
 import * as smartunique from '@pushrocks/smartunique';
+import * as smartstring from '@pushrocks/smartstring';
 import * as smarttime from '@pushrocks/smarttime';
 
-export { lik, smartdata, smartdelay, smartdns, smartexpress, smartpromise, smartrequest, smartunique, smarttime };
+export { lik, smartdata, smartdelay, smartdns, smartexpress, smartpromise, smartrequest, smartunique, smartstring, smarttime };
 
 // thirs party scope
 import * as acme from 'acme-client';

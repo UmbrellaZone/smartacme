@@ -1,6 +1,7 @@
 import * as plugins from './smartacme.plugins';
 import { Cert } from './smartacme.classes.cert';
 import { CertManager } from './smartacme.classes.certmanager';
+import { CertMatcher } from './smartacme.classes.certmatcher';
 
 import * as interfaces from './interfaces';
 import { request } from 'http';
@@ -44,6 +45,7 @@ export class SmartAcme {
 
   // certmanager
   private certmanager: CertManager;
+  private certmatcher: CertMatcher;
   private certremoteHandler: plugins.smartexpress.Handler;
 
   constructor(optionsArg: ISmartAcmeOptions) {
@@ -67,6 +69,9 @@ export class SmartAcme {
       mongoDescriptor: this.options.mongoDescriptor
     });
     await this.certmanager.init();
+
+    // CertMatcher
+    this.certmatcher = new CertMatcher();
 
     // CertRemoteHandler
     this.certremoteHandler = new plugins.smartexpress.Handler('POST', async (req, res) => {
@@ -118,7 +123,7 @@ export class SmartAcme {
   }
 
   public async getCertificateForDomain(domainArg: string): Promise<Cert> {
-    const domain = domainArg;
+    const domain = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
 
     const retrievedCertificate = await this.certmanager.retrieveCertificate(domain);
 
