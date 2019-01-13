@@ -35,7 +35,7 @@ export class CertManager {
 
     // Pending Map
     this.pendingMap = new plugins.lik.Stringmap();
-  };
+  }
 
   /**
    * retrieves a certificate

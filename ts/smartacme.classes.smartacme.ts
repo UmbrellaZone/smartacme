@@ -16,6 +16,7 @@ export interface ISmartAcmeOptions {
   setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
   removeChallenge: (domainName: string) => Promise<any>;
   validateRemoteRequest: () => Promise<boolean>;
+  environment: 'production' | 'integration';
 }
 
 /**
@@ -107,7 +108,13 @@ export class SmartAcme {
 
     // ACME Client
     this.client = new plugins.acme.Client({
-      directoryUrl: plugins.acme.directory.letsencrypt.staging,
+      directoryUrl: (() => {
+        if(this.options.environment === 'production') {
+          return plugins.acme.directory.letsencrypt.production;
+        } else {
+          return plugins.acme.directory.letsencrypt.staging;
+        }
+      })(),
       accountKey: this.privateKey
     });
 

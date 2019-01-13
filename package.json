@@ -35,7 +35,7 @@
     "@pushrocks/smartstring": "^3.0.8",
     "@pushrocks/smarttime": "^3.0.5",
     "@pushrocks/smartunique": "^3.0.1",
-    "acme-client": "^2.2.2"
+    "acme-client": "2.2.2"
   },
   "devDependencies": {
     "@gitzone/tsbuild": "^2.1.4",
