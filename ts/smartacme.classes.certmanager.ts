@@ -64,8 +64,8 @@ export class CertManager {
    */
   public async storeCertificate(optionsArg: ICert) {
     const cert = new Cert(optionsArg);
-    cert.save();
-  };
+    await cert.save();
+  }
 
   public async deleteCertificate(domainNameArg: string) {
 
