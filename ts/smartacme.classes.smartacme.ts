@@ -123,9 +123,9 @@ export class SmartAcme {
   }
 
   public async getCertificateForDomain(domainArg: string): Promise<Cert> {
-    const domain = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
+    const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
 
-    const retrievedCertificate = await this.certmanager.retrieveCertificate(domain);
+    const retrievedCertificate = await this.certmanager.retrieveCertificate(certDomain);
 
     if (retrievedCertificate) {
       return retrievedCertificate;
@@ -133,7 +133,7 @@ export class SmartAcme {
 
     /* Place new order */
     const order = await this.client.createOrder({
-      identifiers: [{ type: 'dns', value: domain }, { type: 'dns', value: `*.${domain}` }]
+      identifiers: [{ type: 'dns', value: certDomain }, { type: 'dns', value: `*.${certDomain}` }]
     });
 
     /* Get authorizations and select challenges */
@@ -173,8 +173,8 @@ export class SmartAcme {
 
     /* Finalize order */
     const [key, csr] = await plugins.acme.forge.createCsr({
-      commonName: `*.${domain}`,
-      altNames: [domain]
+      commonName: `*.${certDomain}`,
+      altNames: [certDomain]
     });
 
     await this.client.finalizeOrder(order, csr);
@@ -186,14 +186,14 @@ export class SmartAcme {
     console.log(`Certificate:\n${cert.toString()}`);
 
     await this.certmanager.storeCertificate({
-      domainName: domainArg,
+      domainName: certDomain,
       privateKey: key.toString(),
       publicKey: cert.toString(),
       csr: csr.toString(),
       created: Date.now()
     });
 
-    const newCertificate = await this.certmanager.retrieveCertificate(domainArg);
+    const newCertificate = await this.certmanager.retrieveCertificate(certDomain);
     return newCertificate;
   }
 }
