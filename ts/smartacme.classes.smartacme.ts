@@ -15,7 +15,6 @@ export interface ISmartAcmeOptions {
   mongoDescriptor: plugins.smartdata.IMongoDescriptor;
   setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
   removeChallenge: (domainName: string) => Promise<any>;
-  validateRemoteRequest: () => Promise<boolean>;
   environment: 'production' | 'integration';
 }
 
@@ -42,12 +41,15 @@ export class SmartAcme {
   // challenge fullfillment
   private setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
   private removeChallenge: (domainName: string) => Promise<any>;
-  private validateRemoteRequest: () => Promise<boolean>;
 
   // certmanager
   private certmanager: CertManager;
   private certmatcher: CertMatcher;
-  private certremoteHandler: plugins.smartexpress.Handler;
+
+  /**
+   * the remote handler to hand the request and response to.
+   */
+  public certremoteHandler: (req: plugins.smartexpress.Request, res: plugins.smartexpress.Response) => Promise<any>;
 
   constructor(optionsArg: ISmartAcmeOptions) {
     this.options = optionsArg;
@@ -75,7 +77,7 @@ export class SmartAcme {
     this.certmatcher = new CertMatcher();
 
     // CertRemoteHandler
-    this.certremoteHandler = new plugins.smartexpress.Handler('POST', async (req, res) => {
+    this.certremoteHandler = async (req, res) => {
       const requestBody: interfaces.ICertRemoteRequest = req.body;
       const status: interfaces.TCertStatus = await this.certmanager.getCertificateStatus(requestBody.domainName);
       const existingCertificate = await this.certmanager.retrieveCertificate(
@@ -86,13 +88,7 @@ export class SmartAcme {
          case 'existing':
           response = {
             status,
-            certificate: {
-              created: existingCertificate.created,
-              csr: existingCertificate.csr,
-              domainName: existingCertificate.domainName,
-              privateKey: existingCertificate.privateKey,
-              publicKey: existingCertificate.publicKey
-            }
+            certificate: await existingCertificate.createSavableObject()
           };
           break;
         default:
@@ -104,7 +100,7 @@ export class SmartAcme {
       res.status(200);
       res.send(response);
       res.end();
-    });
+    };
 
     // ACME Client
     this.client = new plugins.acme.Client({
