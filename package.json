@@ -29,8 +29,8 @@
     "@pushrocks/smartdata": "^3.1.13",
     "@pushrocks/smartdelay": "^2.0.2",
     "@pushrocks/smartdns": "^3.0.8",
-    "@pushrocks/smartexpress": "^3.0.4",
-    "@pushrocks/smartlog": "^2.0.9",
+    "@pushrocks/smartexpress": "^3.0.6",
+    "@pushrocks/smartlog": "^2.0.10",
     "@pushrocks/smartpromise": "^2.0.5",
     "@pushrocks/smartrequest": "^1.1.14",
     "@pushrocks/smartstring": "^3.0.8",
@@ -43,10 +43,10 @@
     "@gitzone/tsrun": "^1.1.17",
     "@gitzone/tstest": "^1.0.18",
     "@mojoio/cloudflare": "^2.0.0",
-    "@pushrocks/qenv": "^3.0.2",
+    "@pushrocks/qenv": "^4.0.0",
     "@pushrocks/tapbundle": "^3.0.7",
     "@types/node": "^10.12.18",
-    "tslint": "^5.12.0",
+    "tslint": "^5.12.1",
     "tslint-config-prettier": "^1.17.0"
   }
 }

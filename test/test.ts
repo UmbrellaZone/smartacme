@@ -12,9 +12,9 @@ tap.test('should create a valid instance of SmartAcme', async () => {
     accountEmail: 'domains@lossless.org',
     accountPrivateKey: null,
     mongoDescriptor: {
-      mongoDbName: testQenv.getEnvVarOnDemand('MONGODB_DATABASE'),
-      mongoDbPass: testQenv.getEnvVarOnDemand('MONGODB_PASSWORD'),
-      mongoDbUrl: testQenv.getEnvVarOnDemand('MONGODB_URL')
+      mongoDbName: testQenv.getEnvVarRequired('MONGODB_DATABASE'),
+      mongoDbPass: testQenv.getEnvVarRequired('MONGODB_PASSWORD'),
+      mongoDbUrl: testQenv.getEnvVarRequired('MONGODB_URL')
     },
     removeChallenge: async (...args) => {
       console.log(args);
@@ -22,9 +22,7 @@ tap.test('should create a valid instance of SmartAcme', async () => {
     setChallenge: async (...args) => {
       console.log(args);
     },
-    validateRemoteRequest: async () => {
-      return true;
-    }
+    environment: "integration"
   });
   await smartAcmeInstance.init();
   // await smartAcmeInstance.getCertificateForDomain('bleu.de');
