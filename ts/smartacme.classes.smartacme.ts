@@ -21,7 +21,7 @@ export interface ISmartAcmeOptions {
 /**
  * class SmartAcme
  * can be used for setting up communication with an ACME authority
- * 
+ *
  * ```ts
  * const mySmartAcmeInstance = new SmartAcme({
  *  // see ISmartAcmeOptions for options
@@ -49,7 +49,36 @@ export class SmartAcme {
   /**
    * the remote handler to hand the request and response to.
    */
-  public certremoteHandler: (req: plugins.smartexpress.Request, res: plugins.smartexpress.Response) => Promise<any>;
+  public certremoteHandler = async (req: plugins.smartexpress.Request, res: plugins.smartexpress.Response) => {
+    const requestBody: interfaces.ICertRemoteRequest = req.body;
+    const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(requestBody.domainName);
+    let status: interfaces.TCertStatus = await this.certmanager.getCertificateStatus(
+      certDomain
+    );
+    let response: interfaces.ICertRemoteResponse;
+    switch (status) {
+      case 'existing':
+        response = {
+          status,
+          certificate: await (await this.certmanager.retrieveCertificate(
+            certDomain
+          )).createSavableObject()
+        };
+        break;
+      default:
+        if (status === "nonexisting") {
+          this.getCertificateForDomain(certDomain);
+          status = 'pending';
+        }
+        response = {
+          status
+        };
+        break;
+    }
+    res.status(200);
+    res.send(response);
+    res.end();
+  }
 
   constructor(optionsArg: ISmartAcmeOptions) {
     this.options = optionsArg;
@@ -76,36 +105,10 @@ export class SmartAcme {
     // CertMatcher
     this.certmatcher = new CertMatcher();
 
-    // CertRemoteHandler
-    this.certremoteHandler = async (req, res) => {
-      const requestBody: interfaces.ICertRemoteRequest = req.body;
-      const status: interfaces.TCertStatus = await this.certmanager.getCertificateStatus(requestBody.domainName);
-      const existingCertificate = await this.certmanager.retrieveCertificate(
-        requestBody.domainName
-      );
-      let response: interfaces.ICertRemoteResponse;
-      switch (status) {
-         case 'existing':
-          response = {
-            status,
-            certificate: await existingCertificate.createSavableObject()
-          };
-          break;
-        default:
-          response = {
-            status
-          };
-          break;
-      }
-      res.status(200);
-      res.send(response);
-      res.end();
-    };
-
     // ACME Client
     this.client = new plugins.acme.Client({
       directoryUrl: (() => {
-        if(this.options.environment === 'production') {
+        if (this.options.environment === 'production') {
           return plugins.acme.directory.letsencrypt.production;
         } else {
           return plugins.acme.directory.letsencrypt.staging;
@@ -127,7 +130,7 @@ export class SmartAcme {
 
   public async getCertificateForDomain(domainArg: string): Promise<Cert> {
     const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
-
+    await this.certmanager.announceCertificate(certDomain);
     const retrievedCertificate = await this.certmanager.retrieveCertificate(certDomain);
 
     if (retrievedCertificate) {

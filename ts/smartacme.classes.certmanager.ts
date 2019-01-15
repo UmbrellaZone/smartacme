@@ -56,10 +56,8 @@ export class CertManager {
   }
 
   /**
-   * stores the certificate with the 
-   * @param publicKeyArg 
-   * @param privateKeyArg 
-   * @param csrArg 
+   * stores the certificate
+   * @param optionsArg 
    */
   public async storeCertificate(optionsArg: interfaces.ICert) {
     const cert = new Cert(optionsArg);
@@ -70,14 +68,25 @@ export class CertManager {
 
   }
 
-  public async getCertificateStatus(domainNameArg: string): Promise<interfaces.TCertStatus> {
-    const isPending = this.pendingMap.checkString('domainNameArg');
+  /**
+   * announce a certificate as being in the process of being retrieved
+   */
+  public async announceCertificate (domainNameArg: string) {
+    this.pendingMap.addString(domainNameArg);
+  }
+
+  /**
+   * gets the status of a certificate by certDomain name
+   * @param certDomainArg
+   */
+  public async getCertificateStatus(certDomainArg: string): Promise<interfaces.TCertStatus> {
+    const isPending = this.pendingMap.checkString(certDomainArg);
     if (isPending) {
       return 'pending';
     }
 
     // otherwise lets continue
-    const existingCertificate = this.retrieveCertificate(domainNameArg);
+    const existingCertificate = this.retrieveCertificate(certDomainArg);
     if (existingCertificate) {
       return 'existing';
     }
