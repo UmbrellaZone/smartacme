@@ -86,7 +86,7 @@ export class CertManager {
     }
 
     // otherwise lets continue
-    const existingCertificate = this.retrieveCertificate(certDomainArg);
+    const existingCertificate = await this.retrieveCertificate(certDomainArg);
     if (existingCertificate) {
       return 'existing';
     }
