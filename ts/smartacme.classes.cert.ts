@@ -12,7 +12,7 @@ import { ICert } from './interfaces';
 })
 export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements interfaces.ICert {
   @unI()
-  public index: string;
+  public id: string;
 
   @svDb()
   public domainName: string;

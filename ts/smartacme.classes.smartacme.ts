@@ -194,6 +194,7 @@ export class SmartAcme {
     console.log(`Certificate:\n${cert.toString()}`);
 
     await this.certmanager.storeCertificate({
+      id: plugins.smartunique.shortId(),
       domainName: certDomain,
       privateKey: key.toString(),
       publicKey: cert.toString(),
