@@ -26,7 +26,7 @@ export class CertRemoteClient {
   public async getCertificateForDomain(domainNameArg: string): Promise<interfaces.ICert> {
     let certificate: interfaces.ICert;
     const doRequestCycle = async (): Promise<interfaces.ICert> => {
-      const response: interfaces.ICertRemoteResponse = (await plugins.smartrequest.postJson(
+      const responseBody: interfaces.ICertRemoteResponse = (await plugins.smartrequest.postJson(
         this.remoteUrl,
         {
           requestBody: <interfaces.ICertRemoteRequest>{
@@ -35,13 +35,15 @@ export class CertRemoteClient {
           }
         }
       )).body;
-      switch (response.status as interfaces.TCertStatus) {
+      console.log(responseBody);
+      switch (responseBody.status as interfaces.TCertStatus) {
         case 'pending':
           await plugins.smartdelay.delayFor(5000);
           const finalResponse = await doRequestCycle();
           return finalResponse;
         case 'existing':
-          return response.certificate;
+          this.logger.log('ok', `got certificate for ${domainNameArg}`);
+          return responseBody.certificate;
         case 'failed':
         default:
           console.log(`could not retrieve certificate for ${domainNameArg}`);

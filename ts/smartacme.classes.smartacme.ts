@@ -16,6 +16,7 @@ export interface ISmartAcmeOptions {
   setChallenge: (domainName: string, keyAuthorization: string) => Promise<any>;
   removeChallenge: (domainName: string) => Promise<any>;
   environment: 'production' | 'integration';
+  logger?: plugins.smartlog.Smartlog;
 }
 
 /**
@@ -34,6 +35,7 @@ export class SmartAcme {
   // the acme client
   private client: any;
   private smartdns = new plugins.smartdns.Smartdns();
+  public logger: plugins.smartlog.Smartlog;
 
   // the account private key
   private privateKey: string;
@@ -49,15 +51,19 @@ export class SmartAcme {
   /**
    * the remote handler to hand the request and response to.
    */
-  public certremoteHandler = async (req: plugins.smartexpress.Request, res: plugins.smartexpress.Response) => {
+  public certremoteHandler = async (
+    req: plugins.smartexpress.Request,
+    res: plugins.smartexpress.Response
+  ) => {
     const requestBody: interfaces.ICertRemoteRequest = req.body;
-    const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(requestBody.domainName);
-    let status: interfaces.TCertStatus = await this.certmanager.getCertificateStatus(
-      certDomain
+    const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(
+      requestBody.domainName
     );
+    let status: interfaces.TCertStatus = await this.certmanager.getCertificateStatus(certDomain);
     let response: interfaces.ICertRemoteResponse;
     switch (status) {
       case 'existing':
+        this.logger.log('ok', `certificate exists for ${certDomain}. Sending certificate!`);
         response = {
           status,
           certificate: await (await this.certmanager.retrieveCertificate(
@@ -66,7 +72,7 @@ export class SmartAcme {
         };
         break;
       default:
-        if (status === "nonexisting") {
+        if (status === 'nonexisting') {
           this.getCertificateForDomain(certDomain);
           status = 'pending';
         }
@@ -82,6 +88,9 @@ export class SmartAcme {
 
   constructor(optionsArg: ISmartAcmeOptions) {
     this.options = optionsArg;
+    this.options.logger
+      ? (this.logger = optionsArg.logger)
+      : (this.logger = plugins.smartlog.defaultLogger);
   }
 
   /**
@@ -189,9 +198,6 @@ export class SmartAcme {
     const cert = await this.client.getCertificate(order);
 
     /* Done */
-    console.log(`CSR:\n${csr.toString()}`);
-    console.log(`Private key:\n${key.toString()}`);
-    console.log(`Certificate:\n${cert.toString()}`);
 
     await this.certmanager.storeCertificate({
       id: plugins.smartunique.shortId(),

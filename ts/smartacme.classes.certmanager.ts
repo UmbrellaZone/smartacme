@@ -62,6 +62,7 @@ export class CertManager {
   public async storeCertificate(optionsArg: interfaces.ICert) {
     const cert = new Cert(optionsArg);
     await cert.save();
+    this.pendingMap.removeString(optionsArg.domainName);
   }
 
   public async deleteCertificate(domainNameArg: string) {
@@ -97,5 +98,7 @@ export class CertManager {
   /**
    * checks all certs for expiration
    */
-  private async checkCerts() {};
+  private async checkCerts() {
+    // TODO
+  };
 }
