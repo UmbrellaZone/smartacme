@@ -56,9 +56,11 @@ export class SmartAcme {
     res: plugins.smartexpress.Response
   ) => {
     const requestBody: interfaces.ICertRemoteRequest = req.body;
+    this.logger.log('ok', `got certificate request for ${requestBody.domainName}`);
     const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(
       requestBody.domainName
     );
+    this.logger.log('ok', `mapping ${requestBody.domainName} to ${certDomain}`);
     let status: interfaces.TCertStatus = await this.certmanager.getCertificateStatus(certDomain);
     let response: interfaces.ICertRemoteResponse;
     switch (status) {
