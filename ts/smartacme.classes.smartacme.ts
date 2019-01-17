@@ -141,11 +141,12 @@ export class SmartAcme {
 
   public async getCertificateForDomain(domainArg: string): Promise<Cert> {
     const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
-    await this.certmanager.announceCertificate(certDomain);
     const retrievedCertificate = await this.certmanager.retrieveCertificate(certDomain);
 
     if (retrievedCertificate) {
       return retrievedCertificate;
+    } else {
+      await this.certmanager.announceCertificate(certDomain);
     }
 
     /* Place new order */
