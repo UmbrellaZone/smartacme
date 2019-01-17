@@ -139,6 +139,20 @@ export class SmartAcme {
     await this.certmanager.smartdataDb.close();
   }
 
+  /**
+   * gets a certificate
+   * it runs through the following steps
+   * 
+   * * look in the database
+   * * if in the database return it
+   * * of not in the database announce it
+   * * then get it from letsencrypt
+   * * store it
+   * * remove it from the pending map (which it go onto by announcing it)
+   * * retrieve it from the databse and return it
+   * 
+   * @param domainArg
+   */
   public async getCertificateForDomain(domainArg: string): Promise<Cert> {
     const certDomain = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
     const retrievedCertificate = await this.certmanager.retrieveCertificate(certDomain);
