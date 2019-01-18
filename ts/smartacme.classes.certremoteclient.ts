@@ -35,9 +35,9 @@ export class CertRemoteClient {
           }
         }
       )).body;
-      console.log(responseBody);
       switch (responseBody.status as interfaces.TCertStatus) {
         case 'pending':
+          this.logger.log('info', `request for ${domainNameArg} still pending!`);
           await plugins.smartdelay.delayFor(5000);
           const finalResponse = await doRequestCycle();
           return finalResponse;
