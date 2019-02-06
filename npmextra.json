@@ -1,4 +1,15 @@
 {
+  "gitzone": {
+    "module": {
+      "githost": "gitlab.com",
+      "gitscope": "pushrocks",
+      "gitrepo": "smartuniverse",
+      "shortDescription": "acme with an easy yet powerful interface in TypeScript",
+      "npmPackagename": "@pushrocks/smartuniverse",
+      "license": "MIT",
+      "projectDomain": "push.rocks"
+    }
+  },
   "npmci": {
     "npmGlobalTools": [],
     "npmAccessLevel": "public"

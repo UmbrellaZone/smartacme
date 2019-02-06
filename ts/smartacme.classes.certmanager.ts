@@ -4,14 +4,12 @@ import { SmartAcme } from './smartacme.classes.smartacme';
 
 import * as interfaces from './interfaces';
 
-
 export class CertManager {
   // =========
   // STATIC
   // =========
   public static activeDB: plugins.smartdata.SmartdataDb;
-  
-  
+
   // =========
   // INSTANCE
   // =========
@@ -20,13 +18,16 @@ export class CertManager {
 
   public pendingMap: plugins.lik.Stringmap;
 
-  constructor(smartAcmeArg: SmartAcme,optionsArg: {
-    mongoDescriptor: plugins.smartdata.IMongoDescriptor;
-  }) {
+  constructor(
+    smartAcmeArg: SmartAcme,
+    optionsArg: {
+      mongoDescriptor: plugins.smartdata.IMongoDescriptor;
+    }
+  ) {
     this.mongoDescriptor = optionsArg.mongoDescriptor;
   }
 
-  public async init () {
+  public async init() {
     // Smartdata DB
     this.smartdataDb = new plugins.smartdata.SmartdataDb(this.mongoDescriptor);
     await this.smartdataDb.init();
@@ -47,17 +48,16 @@ export class CertManager {
       domainName
     });
 
-    if(existingCertificate) {
+    if (existingCertificate) {
       return existingCertificate;
     } else {
       return null;
     }
-
   }
 
   /**
    * stores the certificate
-   * @param optionsArg 
+   * @param optionsArg
    */
   public async storeCertificate(optionsArg: interfaces.ICert) {
     const cert = new Cert(optionsArg);
@@ -65,14 +65,12 @@ export class CertManager {
     this.pendingMap.removeString(optionsArg.domainName);
   }
 
-  public async deleteCertificate(domainNameArg: string) {
-
-  }
+  public async deleteCertificate(domainNameArg: string) {}
 
   /**
    * announce a certificate as being in the process of being retrieved
    */
-  public async announceCertificate (domainNameArg: string) {
+  public async announceCertificate(domainNameArg: string) {
     this.pendingMap.addString(domainNameArg);
   }
 
@@ -100,5 +98,5 @@ export class CertManager {
    */
   private async checkCerts() {
     // TODO
-  };
+  }
 }

@@ -86,7 +86,7 @@ export class SmartAcme {
     res.status(200);
     res.send(response);
     res.end();
-  }
+  };
 
   constructor(optionsArg: ISmartAcmeOptions) {
     this.options = optionsArg;
@@ -142,7 +142,7 @@ export class SmartAcme {
   /**
    * gets a certificate
    * it runs through the following steps
-   * 
+   *
    * * look in the database
    * * if in the database return it
    * * of not in the database announce it
@@ -150,7 +150,7 @@ export class SmartAcme {
    * * store it
    * * remove it from the pending map (which it go onto by announcing it)
    * * retrieve it from the databse and return it
-   * 
+   *
    * @param domainArg
    */
   public async getCertificateForDomain(domainArg: string): Promise<Cert> {

@@ -11,7 +11,19 @@ import * as smartunique from '@pushrocks/smartunique';
 import * as smartstring from '@pushrocks/smartstring';
 import * as smarttime from '@pushrocks/smarttime';
 
-export { lik, smartdata, smartdelay, smartdns, smartexpress, smartlog, smartpromise, smartrequest, smartunique, smartstring, smarttime };
+export {
+  lik,
+  smartdata,
+  smartdelay,
+  smartdns,
+  smartexpress,
+  smartlog,
+  smartpromise,
+  smartrequest,
+  smartunique,
+  smartstring,
+  smarttime
+};
 
 // thirs party scope
 import * as acme from 'acme-client';

@@ -22,14 +22,14 @@ tap.test('should create a valid instance of SmartAcme', async () => {
     setChallenge: async (...args) => {
       console.log(args);
     },
-    environment: "integration"
+    environment: 'integration'
   });
   await smartAcmeInstance.init();
   // await smartAcmeInstance.getCertificateForDomain('bleu.de');
 });
 
 tap.test('certmatcher should correctly match domains', async () => {
-  const certMatcherMod = await import('../ts/smartacme.classes.certmatcher'); 
+  const certMatcherMod = await import('../ts/smartacme.classes.certmatcher');
   const certMatcher = new certMatcherMod.CertMatcher();
   const matchedCert = certMatcher.getCertificateDomainNameByDomainName('level3.level2.level1');
   expect(matchedCert).to.equal('level2.level1');

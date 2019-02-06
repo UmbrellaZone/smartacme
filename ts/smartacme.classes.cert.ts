@@ -22,10 +22,10 @@ export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements inte
 
   @svDb()
   public privateKey: string;
-  
+
   @svDb()
   public publicKey: string;
-  
+
   @svDb()
   public csr: string;
 
