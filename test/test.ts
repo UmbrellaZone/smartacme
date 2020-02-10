@@ -1,7 +1,12 @@
 import { tap, expect } from '@pushrocks/tapbundle';
 import { Qenv } from '@pushrocks/qenv';
+import * as cloudflare from '@mojoio/cloudflare';
 
 const testQenv = new Qenv('./', './.nogit/');
+const testCloudflare = new cloudflare.CloudflareAccount({
+  email: testQenv.getEnvVarOnDemand('CF_EMAIL'),
+  key: testQenv.getEnvVarOnDemand('CF_KEY')
+});
 
 import * as smartacme from '../ts/index';
 
@@ -16,11 +21,11 @@ tap.test('should create a valid instance of SmartAcme', async () => {
       mongoDbPass: testQenv.getEnvVarRequired('MONGODB_PASSWORD'),
       mongoDbUrl: testQenv.getEnvVarRequired('MONGODB_URL')
     },
-    removeChallenge: async (...args) => {
-      console.log(args);
+    removeChallenge: async (dnsChallenge) => {
+      testCloudflare.convenience.acmeRemoveDnsChallenge(dnsChallenge);
     },
-    setChallenge: async (...args) => {
-      console.log(args);
+    setChallenge: async (dnsChallenge) => {
+      testCloudflare.convenience.acmeSetDnsChallenge(dnsChallenge);
     },
     environment: 'integration'
   });

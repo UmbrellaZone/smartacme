@@ -16,7 +16,7 @@ export class CertManager {
   private mongoDescriptor: plugins.smartdata.IMongoDescriptor;
   public smartdataDb: plugins.smartdata.SmartdataDb;
 
-  public pendingMap: plugins.lik.Stringmap;
+  public interestMap: plugins.lik.InterestMap<string, Cert>;
 
   constructor(
     smartAcmeArg: SmartAcme,
@@ -34,18 +34,17 @@ export class CertManager {
     CertManager.activeDB = this.smartdataDb;
 
     // Pending Map
-    this.pendingMap = new plugins.lik.Stringmap();
+    this.interestMap = new plugins.lik.InterestMap((certName) => certName);
   }
 
   /**
    * retrieves a certificate
    * @returns the Cert class or null
-   * @param domainName the domain Name to retrieve the vcertificate for
+   * @param certDomainNameArg the domain Name to retrieve the vcertificate for
    */
-  public async retrieveCertificate(domainName: string): Promise<Cert> {
-    await this.checkCerts();
+  public async retrieveCertificate(certDomainNameArg: string): Promise<Cert> {
     const existingCertificate: Cert = await Cert.getInstance({
-      domainName
+      domainName: certDomainNameArg
     });
 
     if (existingCertificate) {
@@ -59,44 +58,20 @@ export class CertManager {
    * stores the certificate
    * @param optionsArg
    */
-  public async storeCertificate(optionsArg: interfaces.ICert) {
+  public async storeCertificate(optionsArg: plugins.tsclass.network.ICert) {
     const cert = new Cert(optionsArg);
     await cert.save();
-    this.pendingMap.removeString(optionsArg.domainName);
-  }
-
-  public async deleteCertificate(domainNameArg: string) {}
-
-  /**
-   * announce a certificate as being in the process of being retrieved
-   */
-  public async announceCertificate(domainNameArg: string) {
-    this.pendingMap.addString(domainNameArg);
-  }
-
-  /**
-   * gets the status of a certificate by certDomain name
-   * @param certDomainArg
-   */
-  public async getCertificateStatus(certDomainArg: string): Promise<interfaces.TCertStatus> {
-    const isPending = this.pendingMap.checkString(certDomainArg);
-    if (isPending) {
-      return 'pending';
+    const interest = this.interestMap.findInterest(cert.domainName);
+    if (interest) {
+      interest.fullfillInterest(cert);
+      interest.markLost();
     }
-
-    // otherwise lets continue
-    const existingCertificate = await this.retrieveCertificate(certDomainArg);
-    if (existingCertificate) {
-      return 'existing';
-    }
-
-    return 'nonexisting';
   }
 
-  /**
-   * checks all certs for expiration
-   */
-  private async checkCerts() {
-    // TODO
+  public async deleteCertificate(certDomainNameArg: string) {
+    const cert: Cert = await Cert.getInstance({
+      domainName: certDomainNameArg
+    });
+    await cert.delete();
   }
 }

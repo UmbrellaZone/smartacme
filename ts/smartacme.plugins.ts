@@ -25,7 +25,14 @@ export {
   smarttime
 };
 
-// thirs party scope
+// @tsclass scope
+import * as tsclass from '@tsclass/tsclass';
+
+export {
+  tsclass
+}
+
+// third party scope
 import * as acme from 'acme-client';
 
 export { acme };

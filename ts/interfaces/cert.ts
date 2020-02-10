@@ -1,6 +1,6 @@
 export type TCertStatus = 'existing' | 'nonexisting' | 'pending' | 'failed';
 
-export interface ICert {
+export interface IOldCert {
   id: string;
   domainName: string;
   created: number;

@@ -9,7 +9,7 @@ import { Collection, svDb, unI } from '@pushrocks/smartdata';
 @plugins.smartdata.Collection(() => {
   return CertManager.activeDB;
 })
-export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements interfaces.ICert {
+export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements plugins.tsclass.network.ICert {
   @unI()
   public id: string;
 
@@ -28,28 +28,30 @@ export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements inte
   @svDb()
   public csr: string;
 
-  /**
-   * computed value for when the certificate is still valid
-   */
-  get validUntil(): number {
-    return (
-      this.created +
-      plugins.smarttime.getMilliSecondsFromUnits({
-        days: 90
-      })
-    );
+  @svDb()
+  public validUntil: number;
+
+  public isStillValid(): boolean {
+    return this.validUntil >= Date.now();
   }
 
-  get isStillValid(): boolean {
-    const shouldBeValitAtLeastUntil =
+  public shouldBeRenewed(): boolean {
+    const shouldBeValidAtLeastUntil =
       Date.now() +
       plugins.smarttime.getMilliSecondsFromUnits({
         days: 10
       });
-    return this.validUntil >= shouldBeValitAtLeastUntil;
+    return this.validUntil >= shouldBeValidAtLeastUntil;
   }
 
-  constructor(optionsArg: interfaces.ICert) {
+  public update(certDataArg: plugins.tsclass.network.ICert) {
+    Object.keys(certDataArg).forEach(key => {
+      this[key] = certDataArg[key];
+    });
+  }
+
+
+  constructor(optionsArg: plugins.tsclass.network.ICert) {
     super();
     if (optionsArg) {
       Object.keys(optionsArg).forEach(key => {
