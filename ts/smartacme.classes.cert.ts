@@ -41,7 +41,7 @@ export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements plug
       plugins.smarttime.getMilliSecondsFromUnits({
         days: 10
       });
-    return this.validUntil >= shouldBeValidAtLeastUntil;
+    return !(this.validUntil >= shouldBeValidAtLeastUntil);
   }
 
   public update(certDataArg: plugins.tsclass.network.ICert) {

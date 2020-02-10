@@ -114,14 +114,17 @@ export class SmartAcme {
     const certDomainName = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
     const retrievedCertificate = await this.certmanager.retrieveCertificate(certDomainName);
 
+    const shouldberenewed = retrievedCertificate.shouldBeRenewed();
+    const isStillValid = retrievedCertificate.isStillValid();
+
     if (!retrievedCertificate && await this.certmanager.interestMap.checkInterest(certDomainName)) {
       const existingCertificateInterest = this.certmanager.interestMap.findInterest(certDomainName);
       const certificate = existingCertificateInterest.interestFullfilled;
       return certificate;
     } else if (retrievedCertificate && !retrievedCertificate.shouldBeRenewed()) {
       return retrievedCertificate;
-    } else if (retrievedCertificate && retrievedCertificate.shouldBeRenewed) {
-      await retrievedCertificate.delete();
+    } else if (retrievedCertificate && retrievedCertificate.shouldBeRenewed()) {
+      // await retrievedCertificate.delete();
     }
 
     // lets make sure others get the same interest
