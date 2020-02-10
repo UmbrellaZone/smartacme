@@ -28,22 +28,24 @@ export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements inte
   @svDb()
   public csr: string;
 
-
-
   /**
    * computed value for when the certificate is still valid
    */
-  get validUntil (): number {
-    return this.created + plugins.smarttime.getMilliSecondsFromUnits({
-      days: 90
-    });
+  get validUntil(): number {
+    return (
+      this.created +
+      plugins.smarttime.getMilliSecondsFromUnits({
+        days: 90
+      })
+    );
   }
 
-
-  get isStillValid (): boolean {
-    const shouldBeValitAtLeastUntil = Date.now() + plugins.smarttime.getMilliSecondsFromUnits({
-      days: 10
-    });
+  get isStillValid(): boolean {
+    const shouldBeValitAtLeastUntil =
+      Date.now() +
+      plugins.smarttime.getMilliSecondsFromUnits({
+        days: 10
+      });
     return this.validUntil >= shouldBeValitAtLeastUntil;
   }
 

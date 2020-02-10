@@ -26,15 +26,14 @@ export class CertRemoteClient {
   public async getCertificateForDomain(domainNameArg: string): Promise<interfaces.ICert> {
     let certificate: interfaces.ICert;
     const doRequestCycle = async (): Promise<interfaces.ICert> => {
-      const responseBody: interfaces.ICertRemoteResponse = (await plugins.smartrequest.postJson(
-        this.remoteUrl,
-        {
+      const responseBody: interfaces.ICertRemoteResponse = (
+        await plugins.smartrequest.postJson(this.remoteUrl, {
           requestBody: <interfaces.ICertRemoteRequest>{
             domainName: domainNameArg,
             secret: this.secret
           }
-        }
-      )).body;
+        })
+      ).body;
       switch (responseBody.status as interfaces.TCertStatus) {
         case 'pending':
           this.logger.log('info', `request for ${domainNameArg} still pending!`);

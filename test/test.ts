@@ -25,7 +25,10 @@ tap.test('should create a valid instance of SmartAcme', async () => {
     environment: 'integration'
   });
   await smartAcmeInstance.init();
-  // await smartAcmeInstance.getCertificateForDomain('bleu.de');
+});
+
+tap.test('should get a domain certificate', async () => {
+  await smartAcmeInstance.getCertificateForDomain('bleu.de');
 });
 
 tap.test('certmatcher should correctly match domains', async () => {

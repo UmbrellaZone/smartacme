@@ -25,18 +25,18 @@
   },
   "homepage": "https://gitlab.com/umbrellazone/smartacme#README",
   "dependencies": {
-    "@pushrocks/lik": "^3.0.13",
-    "@pushrocks/smartdata": "^3.1.23",
+    "@pushrocks/lik": "^3.0.17",
+    "@pushrocks/smartdata": "^3.1.25",
     "@pushrocks/smartdelay": "^2.0.6",
     "@pushrocks/smartdns": "^3.0.8",
-    "@pushrocks/smartexpress": "^3.0.54",
+    "@pushrocks/smartexpress": "^3.0.57",
     "@pushrocks/smartlog": "^2.0.21",
     "@pushrocks/smartpromise": "^3.0.6",
     "@pushrocks/smartrequest": "^1.1.47",
-    "@pushrocks/smartstring": "^3.0.17",
+    "@pushrocks/smartstring": "^3.0.18",
     "@pushrocks/smarttime": "^3.0.12",
     "@pushrocks/smartunique": "^3.0.1",
-    "acme-client": "2.2.2"
+    "acme-client": "^3.3.1"
   },
   "devDependencies": {
     "@gitzone/tsbuild": "^2.1.17",
@@ -45,8 +45,19 @@
     "@mojoio/cloudflare": "^3.0.5",
     "@pushrocks/qenv": "^4.0.6",
     "@pushrocks/tapbundle": "^3.2.0",
-    "@types/node": "^13.1.8",
-    "tslint": "^5.20.1",
+    "@types/node": "^13.7.0",
+    "tslint": "^6.0.0",
     "tslint-config-prettier": "^1.18.0"
-  }
+  },
+  "files": [
+    "ts/**/*",
+    "ts_web/**/*",
+    "dist/**/*",
+    "dist_web/**/*",
+    "dist_ts_web/**/*",
+    "assets/**/*",
+    "cli.js",
+    "npmextra.json",
+    "readme.md"
+  ]
 }

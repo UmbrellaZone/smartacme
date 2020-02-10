@@ -68,9 +68,9 @@ export class SmartAcme {
         this.logger.log('ok', `certificate exists for ${certDomain}. Sending certificate!`);
         response = {
           status,
-          certificate: await (await this.certmanager.retrieveCertificate(
-            certDomain
-          )).createSavableObject()
+          certificate: await (
+            await this.certmanager.retrieveCertificate(certDomain)
+          ).createSavableObject()
         };
         break;
       default:
@@ -103,7 +103,7 @@ export class SmartAcme {
    */
   public async init() {
     this.privateKey =
-      this.options.accountPrivateKey || (await plugins.acme.forge.createPrivateKey());
+      this.options.accountPrivateKey || (await plugins.acme.forge.createPrivateKey()).toString();
     this.setChallenge = this.options.setChallenge;
     this.removeChallenge = this.options.removeChallenge;
 
@@ -165,7 +165,10 @@ export class SmartAcme {
 
     /* Place new order */
     const order = await this.client.createOrder({
-      identifiers: [{ type: 'dns', value: certDomain }, { type: 'dns', value: `*.${certDomain}` }]
+      identifiers: [
+        { type: 'dns', value: certDomain },
+        { type: 'dns', value: `*.${certDomain}` }
+      ]
     });
 
     /* Get authorizations and select challenges */
