@@ -3,9 +3,6 @@ import { Cert } from './smartacme.classes.cert';
 import { CertManager } from './smartacme.classes.certmanager';
 import { CertMatcher } from './smartacme.classes.certmatcher';
 
-import * as interfaces from './interfaces';
-import { request } from 'http';
-
 /**
  * the options for the class @see SmartAcme
  */
