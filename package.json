@@ -1,6 +1,6 @@
 {
   "name": "@pushrocks/smartacme",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "private": false,
   "description": "acme with an easy yet powerful interface in TypeScript",
   "main": "dist/index.js",
