@@ -9,7 +9,7 @@ import { Collection, svDb, unI } from '@pushrocks/smartdata';
 @plugins.smartdata.Collection(() => {
   return CertManager.activeDB;
 })
-export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert> implements plugins.tsclass.network.ICert {
+export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert, plugins.tsclass.network.ICert> implements plugins.tsclass.network.ICert {
   @unI()
   public id: string;
 

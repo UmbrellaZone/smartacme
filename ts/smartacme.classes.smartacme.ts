@@ -31,7 +31,7 @@ export class SmartAcme {
 
   // the acme client
   private client: any;
-  private smartdns = new plugins.smartdns.Smartdns();
+  private smartdns = new plugins.smartdns.Smartdns({});
   public logger: plugins.smartlog.Smartlog;
 
   // the account private key
