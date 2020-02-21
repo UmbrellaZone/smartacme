@@ -34,7 +34,7 @@ export class CertManager {
     CertManager.activeDB = this.smartdataDb;
 
     // Pending Map
-    this.interestMap = new plugins.lik.InterestMap((certName) => certName);
+    this.interestMap = new plugins.lik.InterestMap(certName => certName);
   }
 
   /**

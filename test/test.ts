@@ -21,10 +21,10 @@ tap.test('should create a valid instance of SmartAcme', async () => {
       mongoDbPass: testQenv.getEnvVarRequired('MONGODB_PASSWORD'),
       mongoDbUrl: testQenv.getEnvVarRequired('MONGODB_URL')
     },
-    removeChallenge: async (dnsChallenge) => {
+    removeChallenge: async dnsChallenge => {
       testCloudflare.convenience.acmeRemoveDnsChallenge(dnsChallenge);
     },
-    setChallenge: async (dnsChallenge) => {
+    setChallenge: async dnsChallenge => {
       testCloudflare.convenience.acmeSetDnsChallenge(dnsChallenge);
     },
     environment: 'integration'

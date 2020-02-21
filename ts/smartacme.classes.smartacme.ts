@@ -114,7 +114,10 @@ export class SmartAcme {
     const certDomainName = this.certmatcher.getCertificateDomainNameByDomainName(domainArg);
     const retrievedCertificate = await this.certmanager.retrieveCertificate(certDomainName);
 
-    if (!retrievedCertificate && await this.certmanager.interestMap.checkInterest(certDomainName)) {
+    if (
+      !retrievedCertificate &&
+      (await this.certmanager.interestMap.checkInterest(certDomainName))
+    ) {
       const existingCertificateInterest = this.certmanager.interestMap.findInterest(certDomainName);
       const certificate = existingCertificateInterest.interestFullfilled;
       return certificate;
@@ -126,7 +129,6 @@ export class SmartAcme {
 
     // lets make sure others get the same interest
     const currentDomainInterst = await this.certmanager.interestMap.addInterest(certDomainName);
-    
 
     /* Place new order */
     const order = await this.client.createOrder({

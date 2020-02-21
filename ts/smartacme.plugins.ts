@@ -28,9 +28,7 @@ export {
 // @tsclass scope
 import * as tsclass from '@tsclass/tsclass';
 
-export {
-  tsclass
-}
+export { tsclass };
 
 // third party scope
 import * as acme from 'acme-client';
