@@ -3,8 +3,8 @@
   "version": "3.0.5",
   "private": false,
   "description": "acme with an easy yet powerful interface in TypeScript",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "dist_ts/index.js",
+  "typings": "dist_ts/index.d.ts",
   "scripts": {
     "test": "(tstest test/)",
     "build": "(tsbuild)"
@@ -54,7 +54,8 @@
     "ts/**/*",
     "ts_web/**/*",
     "dist/**/*",
-    "dist_web/**/*",
+    "dist_*/**/*",
+    "dist_ts/**/*",
     "dist_ts_web/**/*",
     "assets/**/*",
     "cli.js",

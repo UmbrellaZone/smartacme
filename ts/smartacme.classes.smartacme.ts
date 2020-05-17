@@ -124,7 +124,7 @@ export class SmartAcme {
     } else if (retrievedCertificate && !retrievedCertificate.shouldBeRenewed()) {
       return retrievedCertificate;
     } else if (retrievedCertificate && retrievedCertificate.shouldBeRenewed()) {
-      // await retrievedCertificate.delete();
+      await retrievedCertificate.delete();
     }
 
     // lets make sure others get the same interest
