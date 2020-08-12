@@ -15,7 +15,7 @@
             "properties": {
               "projectType": {
                 "type": "string",
-                "enum": ["website", "element", "service", "npm"]
+                "enum": ["website", "element", "service", "npm", "wcc"]
               }
             }
           }

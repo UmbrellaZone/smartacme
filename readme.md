@@ -8,13 +8,20 @@ acme with an easy yet powerful interface in TypeScript
 * [docs (typedoc)](https://pushrocks.gitlab.io/smartuniverse/)
 
 ## Status for master
-[![pipeline status](https://gitlab.com/pushrocks/smartuniverse/badges/master/pipeline.svg)](https://gitlab.com/pushrocks/smartuniverse/commits/master)
-[![coverage report](https://gitlab.com/pushrocks/smartuniverse/badges/master/coverage.svg)](https://gitlab.com/pushrocks/smartuniverse/commits/master)
-[![npm downloads per month](https://img.shields.io/npm/dm/@pushrocks/smartuniverse.svg)](https://www.npmjs.com/package/@pushrocks/smartuniverse)
-[![Known Vulnerabilities](https://snyk.io/test/npm/@pushrocks/smartuniverse/badge.svg)](https://snyk.io/test/npm/@pushrocks/smartuniverse)
-[![TypeScript](https://img.shields.io/badge/TypeScript->=%203.x-blue.svg)](https://nodejs.org/dist/latest-v10.x/docs/api/)
-[![node](https://img.shields.io/badge/node->=%2010.x.x-blue.svg)](https://nodejs.org/dist/latest-v10.x/docs/api/)
-[![JavaScript Style Guide](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://prettier.io/)
+
+Status Category | Status Badge
+-- | --
+GitLab Pipelines | [![pipeline status](https://gitlab.com/pushrocks/smartuniverse/badges/master/pipeline.svg)](https://lossless.cloud)
+GitLab Pipline Test Coverage | [![coverage report](https://gitlab.com/pushrocks/smartuniverse/badges/master/coverage.svg)](https://lossless.cloud)
+npm | [![npm downloads per month](https://badgen.net/npm/dy/@pushrocks/smartuniverse)](https://lossless.cloud)
+Snyk | [![Known Vulnerabilities](https://badgen.net/snyk/pushrocks/smartuniverse)](https://lossless.cloud)
+TypeScript Support | [![TypeScript](https://badgen.net/badge/TypeScript/>=%203.x/blue?icon=typescript)](https://lossless.cloud)
+node Support | [![node](https://img.shields.io/badge/node->=%2010.x.x-blue.svg)](https://nodejs.org/dist/latest-v10.x/docs/api/)
+Code Style | [![Code Style](https://badgen.net/badge/style/prettier/purple)](https://lossless.cloud)
+PackagePhobia (total standalone install weight) | [![PackagePhobia](https://badgen.net/packagephobia/install/@pushrocks/smartuniverse)](https://lossless.cloud)
+PackagePhobia (package size on registry) | [![PackagePhobia](https://badgen.net/packagephobia/publish/@pushrocks/smartuniverse)](https://lossless.cloud)
+BundlePhobia (total size when bundled) | [![BundlePhobia](https://badgen.net/bundlephobia/minzip/@pushrocks/smartuniverse)](https://lossless.cloud)
+Platform support | [![Supports Windows 10](https://badgen.net/badge/supports%20Windows%2010/yes/green?icon=windows)](https://lossless.cloud) [![Supports Mac OS X](https://badgen.net/badge/supports%20Mac%20OS%20X/yes/green?icon=apple)](https://lossless.cloud)
 
 ## Usage
 
@@ -30,15 +37,15 @@ const run = async () => {
     mongoDescriptor: {
       mongoDbName: testQenv.getEnvVarRequired('MONGODB_DATABASE'),
       mongoDbPass: testQenv.getEnvVarRequired('MONGODB_PASSWORD'),
-      mongoDbUrl: testQenv.getEnvVarRequired('MONGODB_URL')
+      mongoDbUrl: testQenv.getEnvVarRequired('MONGODB_URL'),
     },
-    removeChallenge: async dnsChallenge => {
+    removeChallenge: async (dnsChallenge) => {
       // somehow provide a function that is able to remove the dns challenge
     },
-    setChallenge: async dnsChallenge => {
+    setChallenge: async (dnsChallenge) => {
       // somehow provide a function that is able to the dns challenge
     },
-    environment: 'integration'
+    environment: 'integration',
   });
   await smartAcmeInstance.init();
 

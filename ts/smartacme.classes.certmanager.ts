@@ -34,7 +34,7 @@ export class CertManager {
     CertManager.activeDB = this.smartdataDb;
 
     // Pending Map
-    this.interestMap = new plugins.lik.InterestMap(certName => certName);
+    this.interestMap = new plugins.lik.InterestMap((certName) => certName);
   }
 
   /**
@@ -44,7 +44,7 @@ export class CertManager {
    */
   public async retrieveCertificate(certDomainNameArg: string): Promise<Cert> {
     const existingCertificate: Cert = await Cert.getInstance({
-      domainName: certDomainNameArg
+      domainName: certDomainNameArg,
     });
 
     if (existingCertificate) {
@@ -70,7 +70,7 @@ export class CertManager {
 
   public async deleteCertificate(certDomainNameArg: string) {
     const cert: Cert = await Cert.getInstance({
-      domainName: certDomainNameArg
+      domainName: certDomainNameArg,
     });
     await cert.delete();
   }

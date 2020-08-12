@@ -22,7 +22,7 @@ export {
   smartrequest,
   smartunique,
   smartstring,
-  smarttime
+  smarttime,
 };
 
 // @tsclass scope

@@ -5,7 +5,7 @@ import * as cloudflare from '@mojoio/cloudflare';
 const testQenv = new Qenv('./', './.nogit/');
 const testCloudflare = new cloudflare.CloudflareAccount({
   email: testQenv.getEnvVarOnDemand('CF_EMAIL'),
-  key: testQenv.getEnvVarOnDemand('CF_KEY')
+  key: testQenv.getEnvVarOnDemand('CF_KEY'),
 });
 
 import * as smartacme from '../ts/index';
@@ -19,15 +19,15 @@ tap.test('should create a valid instance of SmartAcme', async () => {
     mongoDescriptor: {
       mongoDbName: testQenv.getEnvVarRequired('MONGODB_DATABASE'),
       mongoDbPass: testQenv.getEnvVarRequired('MONGODB_PASSWORD'),
-      mongoDbUrl: testQenv.getEnvVarRequired('MONGODB_URL')
+      mongoDbUrl: testQenv.getEnvVarRequired('MONGODB_URL'),
     },
-    removeChallenge: async dnsChallenge => {
+    removeChallenge: async (dnsChallenge) => {
       testCloudflare.convenience.acmeRemoveDnsChallenge(dnsChallenge);
     },
-    setChallenge: async dnsChallenge => {
+    setChallenge: async (dnsChallenge) => {
       testCloudflare.convenience.acmeSetDnsChallenge(dnsChallenge);
     },
-    environment: 'integration'
+    environment: 'integration',
   });
   await smartAcmeInstance.init();
 });

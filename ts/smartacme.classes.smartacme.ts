@@ -66,7 +66,7 @@ export class SmartAcme {
 
     // CertMangaer
     this.certmanager = new CertManager(this, {
-      mongoDescriptor: this.options.mongoDescriptor
+      mongoDescriptor: this.options.mongoDescriptor,
     });
     await this.certmanager.init();
 
@@ -82,13 +82,13 @@ export class SmartAcme {
           return plugins.acme.directory.letsencrypt.staging;
         }
       })(),
-      accountKey: this.privateKey
+      accountKey: this.privateKey,
     });
 
     /* Register account */
     await this.client.createAccount({
       termsOfServiceAgreed: true,
-      contact: [`mailto:${this.options.accountEmail}`]
+      contact: [`mailto:${this.options.accountEmail}`],
     });
   }
 
@@ -134,8 +134,8 @@ export class SmartAcme {
     const order = await this.client.createOrder({
       identifiers: [
         { type: 'dns', value: certDomainName },
-        { type: 'dns', value: `*.${certDomainName}` }
-      ]
+        { type: 'dns', value: `*.${certDomainName}` },
+      ],
     });
 
     /* Get authorizations and select challenges */
@@ -144,7 +144,7 @@ export class SmartAcme {
     for (const authz of authorizations) {
       console.log(authz);
       const fullHostName: string = `_acme-challenge.${authz.identifier.value}`;
-      const dnsChallenge: string = authz.challenges.find(challengeArg => {
+      const dnsChallenge: string = authz.challenges.find((challengeArg) => {
         return challengeArg.type === 'dns-01';
       });
       // process.exit(1);
@@ -154,7 +154,7 @@ export class SmartAcme {
         /* Satisfy challenge */
         await this.setChallenge({
           hostName: fullHostName,
-          challenge: keyAuthorization
+          challenge: keyAuthorization,
         });
         await this.smartdns.checkUntilAvailable(fullHostName, 'TXT', keyAuthorization, 100, 5000);
         console.log('Cool down an extra 60 second for region availability');
@@ -173,7 +173,7 @@ export class SmartAcme {
         try {
           await this.removeChallenge({
             hostName: fullHostName,
-            challenge: keyAuthorization
+            challenge: keyAuthorization,
           });
         } catch (e) {
           console.log(e);
@@ -184,7 +184,7 @@ export class SmartAcme {
     /* Finalize order */
     const [key, csr] = await plugins.acme.forge.createCsr({
       commonName: `*.${certDomainName}`,
-      altNames: [certDomainName]
+      altNames: [certDomainName],
     });
 
     await this.client.finalizeOrder(order, csr);
@@ -202,8 +202,8 @@ export class SmartAcme {
       validUntil:
         Date.now() +
         plugins.smarttime.getMilliSecondsFromUnits({
-          days: 90
-        })
+          days: 90,
+        }),
     });
 
     const newCertificate = await this.certmanager.retrieveCertificate(certDomainName);

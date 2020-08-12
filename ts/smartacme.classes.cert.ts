@@ -40,13 +40,13 @@ export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert, plugins.tsclass
     const shouldBeValidAtLeastUntil =
       Date.now() +
       plugins.smarttime.getMilliSecondsFromUnits({
-        days: 10
+        days: 10,
       });
     return !(this.validUntil >= shouldBeValidAtLeastUntil);
   }
 
   public update(certDataArg: plugins.tsclass.network.ICert) {
-    Object.keys(certDataArg).forEach(key => {
+    Object.keys(certDataArg).forEach((key) => {
       this[key] = certDataArg[key];
     });
   }
@@ -54,7 +54,7 @@ export class Cert extends plugins.smartdata.SmartDataDbDoc<Cert, plugins.tsclass
   constructor(optionsArg: plugins.tsclass.network.ICert) {
     super();
     if (optionsArg) {
-      Object.keys(optionsArg).forEach(key => {
+      Object.keys(optionsArg).forEach((key) => {
         this[key] = optionsArg[key];
       });
     }
