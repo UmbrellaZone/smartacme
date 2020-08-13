@@ -3,10 +3,7 @@ import { Qenv } from '@pushrocks/qenv';
 import * as cloudflare from '@mojoio/cloudflare';
 
 const testQenv = new Qenv('./', './.nogit/');
-const testCloudflare = new cloudflare.CloudflareAccount({
-  email: testQenv.getEnvVarOnDemand('CF_EMAIL'),
-  key: testQenv.getEnvVarOnDemand('CF_KEY'),
-});
+const testCloudflare = new cloudflare.CloudflareAccount(testQenv.getEnvVarOnDemand('CF_TOKEN'));
 
 import * as smartacme from '../ts/index';
 

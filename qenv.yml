@@ -1,6 +1,5 @@
 required:
-  - CF_EMAIL
-  - CF_KEY
+  - CF_TOKEN
   - MONGODB_URL
   - MONGODB_PASSWORD
   - MONGODB_DATABASE

@@ -13,7 +13,6 @@ export interface ISmartAcmeOptions {
   setChallenge: (dnsChallengeArg: plugins.tsclass.network.IDnsChallenge) => Promise<any>;
   removeChallenge: (dnsChallengeArg: plugins.tsclass.network.IDnsChallenge) => Promise<any>;
   environment: 'production' | 'integration';
-  logger?: plugins.smartlog.Smartlog;
 }
 
 /**
@@ -32,7 +31,7 @@ export class SmartAcme {
   // the acme client
   private client: any;
   private smartdns = new plugins.smartdns.Smartdns({});
-  public logger: plugins.smartlog.Smartlog;
+  public logger: plugins.smartlog.ConsoleLog;
 
   // the account private key
   private privateKey: string;
@@ -47,9 +46,7 @@ export class SmartAcme {
 
   constructor(optionsArg: ISmartAcmeOptions) {
     this.options = optionsArg;
-    this.options.logger
-      ? (this.logger = optionsArg.logger)
-      : (this.logger = plugins.smartlog.defaultLogger);
+    this.logger = new plugins.smartlog.ConsoleLog();
   }
 
   /**
@@ -156,6 +153,7 @@ export class SmartAcme {
           hostName: fullHostName,
           challenge: keyAuthorization,
         });
+        await plugins.smartdelay.delayFor(30000);
         await this.smartdns.checkUntilAvailable(fullHostName, 'TXT', keyAuthorization, 100, 5000);
         console.log('Cool down an extra 60 second for region availability');
         await plugins.smartdelay.delayFor(60000);

@@ -4,9 +4,9 @@
     "module": {
       "githost": "gitlab.com",
       "gitscope": "pushrocks",
-      "gitrepo": "smartuniverse",
+      "gitrepo": "smartacme",
       "shortDescription": "acme with an easy yet powerful interface in TypeScript",
-      "npmPackagename": "@pushrocks/smartuniverse",
+      "npmPackagename": "@pushrocks/smartacme",
       "license": "MIT",
       "projectDomain": "push.rocks"
     }

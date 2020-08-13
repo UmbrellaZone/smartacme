@@ -40,9 +40,9 @@
     "acme-client": "^3.3.1"
   },
   "devDependencies": {
-    "@gitzone/tsbuild": "^2.1.24",
+    "@gitzone/tsbuild": "^2.1.25",
     "@gitzone/tsrun": "^1.2.12",
-    "@gitzone/tstest": "^1.0.43",
+    "@gitzone/tstest": "^1.0.44",
     "@mojoio/cloudflare": "^5.0.6",
     "@pushrocks/qenv": "^4.0.10",
     "@pushrocks/tapbundle": "^3.2.9",
