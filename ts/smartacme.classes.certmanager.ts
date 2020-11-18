@@ -43,7 +43,7 @@ export class CertManager {
    * @param certDomainNameArg the domain Name to retrieve the vcertificate for
    */
   public async retrieveCertificate(certDomainNameArg: string): Promise<Cert> {
-    const existingCertificate: Cert = await Cert.getInstance({
+    const existingCertificate: Cert = await Cert.getInstance<Cert>({
       domainName: certDomainNameArg,
     });
 
@@ -69,7 +69,7 @@ export class CertManager {
   }
 
   public async deleteCertificate(certDomainNameArg: string) {
-    const cert: Cert = await Cert.getInstance({
+    const cert: Cert = await Cert.getInstance<Cert>({
       domainName: certDomainNameArg,
     });
     await cert.delete();
