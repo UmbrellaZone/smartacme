@@ -30,7 +30,8 @@ tap.test('should create a valid instance of SmartAcme', async () => {
 });
 
 tap.test('should get a domain certificate', async () => {
-  await smartAcmeInstance.getCertificateForDomain('bleu.de');
+  const certificate = await smartAcmeInstance.getCertificateForDomain('bleu.de');
+  console.log(certificate);
 });
 
 tap.test('certmatcher should correctly match domains', async () => {
