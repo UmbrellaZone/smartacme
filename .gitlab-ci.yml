@@ -36,6 +36,7 @@ auditProductionDependencies:
     - npmci command npm audit --audit-level=high --only=prod --production
   tags:
     - docker
+  allow_failure: true
 
 auditDevDependencies:
   image: registry.gitlab.com/hosttoday/ht-docker-node:npmci
