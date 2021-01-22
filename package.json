@@ -28,7 +28,7 @@
     "@pushrocks/lik": "^4.0.20",
     "@pushrocks/smartdata": "^3.1.54",
     "@pushrocks/smartdelay": "^2.0.10",
-    "@pushrocks/smartdns": "^4.0.7",
+    "@pushrocks/smartdns": "^4.0.8",
     "@pushrocks/smartexpress": "^3.0.100",
     "@pushrocks/smartlog": "^2.0.39",
     "@pushrocks/smartpromise": "^3.1.3",
